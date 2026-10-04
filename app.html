@@ -1,0 +1,881 @@
+<title>Linear ao Vivo</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: CRM de uma página — faixa de demonstração + navegação superior,
+   conteúdo em cartões; ficha do lead em duas colunas (trabalho | contexto). */
+:root{
+  --bg:#F2F3F5; --surface:#FFFFFF; --surface-2:#F7F8FA; --ink:#1C2129; --muted:#5D6675; --faint:#8A93A1;
+  --line:#E0E3E8; --brand:#8B4733; --brand-ink:#6B3424; --brand-soft:#F4E7E1; --on-brand:#FFFFFF;
+  --ok:#1D7A55; --ok-soft:#E3F3EB; --warn:#8F5D00; --warn-soft:#FDF3DC; --bad:#B4362A; --bad-soft:#FBE7E4;
+  --info:#2F5E9E; --info-soft:#E6EEF9; --cold:#2D6C93; --cold-soft:#E4F0F7;
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121417; --surface:#1A1D22; --surface-2:#20242A; --ink:#E9EBEE; --muted:#A1AAB6; --faint:#7C8592;
+    --line:#2C3138; --brand:#D9906F; --brand-ink:#F0B79E; --brand-soft:#3A271F; --on-brand:#1A1210;
+    --ok:#4CC593; --ok-soft:#173327; --warn:#E3AC3D; --warn-soft:#382B12; --bad:#EE6A5C; --bad-soft:#3A1D1A;
+    --info:#7FA8E3; --info-soft:#1C2A3D; --cold:#77B5DA; --cold-soft:#18303D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121417; --surface:#1A1D22; --surface-2:#20242A; --ink:#E9EBEE; --muted:#A1AAB6; --faint:#7C8592;
+  --line:#2C3138; --brand:#D9906F; --brand-ink:#F0B79E; --brand-soft:#3A271F; --on-brand:#1A1210;
+  --ok:#4CC593; --ok-soft:#173327; --warn:#E3AC3D; --warn-soft:#382B12; --bad:#EE6A5C; --bad-soft:#3A1D1A;
+  --info:#7FA8E3; --info-soft:#1C2A3D; --cold:#77B5DA; --cold-soft:#18303D;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+.demo-strip{background:var(--brand);color:var(--on-brand);font-size:12.5px;padding:7px 20px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
+.demo-strip b{font-weight:600}
+.demo-strip button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:0 20px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.topbar-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:22px;min-height:56px;flex-wrap:wrap}
+.wordmark{font-family:var(--display);font-size:21px;font-weight:600;color:var(--brand-ink);letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px}
+.wordmark small{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav button{background:none;border:none;padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;font-weight:500}
+.nav button:hover{background:var(--surface-2);color:var(--ink)}
+.nav button[aria-current="page"]{background:var(--brand-soft);color:var(--brand-ink)}
+.nav .count{font-family:var(--mono);font-size:11px;margin-left:4px;opacity:.75}
+main{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:26px 90px}
+h1{font-family:var(--display);font-weight:600;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:14.5px;font-weight:600;margin:0}
+h3{font-size:12px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+.sub{color:var(--muted);margin:4px 0 0}
+.page-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card + .card{margin-top:16px}
+.card-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stack{display:grid;gap:16px;align-content:start;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.good{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:4px 9px;font-size:12px}
+.btn:focus-visible,.nav button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.link:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.link{background:none;border:none;padding:0;color:var(--brand-ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-weight:500}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:38px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row.end{justify-content:flex-end}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.ni{color:var(--faint);font-style:italic}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:500;border:1px solid transparent;white-space:nowrap;background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.badge.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.badge.info{background:var(--info-soft);color:var(--info);border-color:transparent}
+.badge.brand{background:var(--brand-soft);color:var(--brand-ink);border-color:transparent}
+.badge.cold{background:var(--cold-soft);color:var(--cold);border-color:transparent}
+.score{display:inline-flex;align-items:baseline;gap:6px;border-radius:999px;padding:2px 10px 2px 8px;font-size:12px;font-weight:600}
+.score .n{font-family:var(--mono);font-size:13px}
+.score.QUENTE{background:var(--bad-soft);color:var(--bad)}
+.score.MORNO{background:var(--warn-soft);color:var(--warn)}
+.score.FRIO{background:var(--cold-soft);color:var(--cold)}
+.notice{border-radius:9px;padding:10px 12px;font-size:13px;border:1px solid transparent}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.info{background:var(--info-soft);color:var(--info)}
+.notice.brand{background:var(--brand-soft);color:var(--brand-ink)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface-2)}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 18px;margin:0}
+.dl div{min-width:0}
+.dl dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:600}
+.dl dd{margin:2px 0 0;overflow-wrap:anywhere}
+.list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.item{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface-2);min-width:0}
+.q{display:grid;grid-template-columns:12px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);margin-top:6px}
+.dot.on{background:var(--ok)}
+.progress{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.progress span{display:block;height:100%;background:var(--ok)}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.timeline li{display:grid;grid-template-columns:10px minmax(0,1fr);gap:10px}
+.timeline .tdot{width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:6px}
+.ev{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ev:last-child{border-bottom:none}
+.ev .name{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.chip-auto{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-ink);background:var(--brand-soft);border-radius:4px;padding:1px 6px;margin-left:6px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:240px;gap:12px;overflow-x:auto;padding-bottom:8px}
+.col{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:140px;align-self:start}
+.col h2{font-size:13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pcard{border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:10px;margin-top:8px;cursor:pointer;text-align:left;width:100%;display:grid;gap:3px}
+.pcard:hover{border-color:var(--brand)}
+.contract-text{white-space:pre-wrap;font-family:var(--sans);font-size:12.5px;line-height:1.6;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:16px;max-height:420px;overflow:auto;overflow-wrap:anywhere}
+.contract-text .h2{font-weight:600;font-size:13.5px;display:block;margin-top:6px}
+.contract-text .h3{font-weight:600;display:block}
+mark.pend{background:var(--warn-soft);color:var(--warn);border-radius:4px;padding:0 3px;font-weight:600}
+.tour{border:1px dashed var(--brand);background:var(--brand-soft);color:var(--brand-ink);border-radius:12px;padding:16px 18px;margin-bottom:20px}
+.tour ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
+.tour b{font-weight:600}
+#toasts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:50;max-width:min(380px,calc(100vw - 32px))}
+.toast{background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.18);animation:tin .25s ease-out}
+.toast.auto{background:var(--brand);color:var(--on-brand)}
+.toast.error{background:var(--bad);color:#fff}
+.toast .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;opacity:.8;display:block;margin-bottom:2px}
+@keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+.split{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:flex-start}
+.price-big{font-family:var(--mono);font-size:15px;font-weight:500}
+hr.sep{border:none;border-top:1px solid var(--line);margin:12px 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="demo-strip">
+  <span><b>Demonstração interativa</b> · dados fictícios · tudo fica só no seu navegador</span>
+  <button type="button" data-action="reset" id="reset-btn">Recomeçar do zero</button>
+</div>
+<header class="topbar"><div class="topbar-in">
+  <div class="wordmark">Linear <small>ao vivo</small></div>
+  <nav class="nav" id="nav" aria-label="Seções"></nav>
+</div></header>
+<main id="app"></main>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+// ===================================================================
+// Demonstração interativa da plataforma Linear. Roda 100% no navegador
+// (sem servidor). Reproduz as mesmas regras de negócio do sistema real:
+// score (5 critérios com pesos), perguntas de checklist da seção 4,
+// funil com motivo obrigatório na saída, agendamento com avanço
+// automático de etapa, proposta a partir da tabela de preços, contrato
+// gerado do template REAL da Linear com [PENDENTE] quando falta dado.
+// ===================================================================
+const CONTRACT_TEMPLATE = "INSTRUMENTO PARTICULAR DE CONTRATO DE PRESTAÇÃO DE SERVIÇOS PROFISSIONAIS CONTÁBEIS\n\nDEFINIÇÃO: O presente contrato visa documentar a proposta de prestação de SERVIÇOS, apresentado oportunamente pela CONTRATADA e aceito previamente pelo CONTRATANTE, contendo todas as informações acerca da metodologia de trabalho, do cronograma de atividades, dos recursos necessários para a execução dos serviços, bem como as descrições das condições de pagamento e prazos previamente estabelecidos.\n\nCONTRATADA: LINEAR CONTABILIDADE LTDA, inscrita no CNPJ nº 17.484.664/0001-76, estabelecida à Avenida Blumenau, 3727 – Sala 08, Bairro Centro-Norte, Município de Sorriso-MT, devidamente inscrita no CRC/MT sob o nº MT-000733/O, representada neste ato por GLEYDSON LEONAN MARTINS DOS SANTOS FERREIRA, inscrito no CPF Nº 025.896.021-38 e devidamente registrado como Contador no CRC Nº MT-016187/O.\n\nCONTRATANTE: {{cliente.razaoSocial}}, inscrita sob o CNPJ nº {{cliente.cnpj}}, estabelecida na {{cliente.logradouro}}, nº {{cliente.numero}}, Bairro {{cliente.bairro}}, no Município de {{cliente.municipio}} – {{cliente.uf}}, CEP {{cliente.cep}}, neste ato representado por seu representante legal, {{cliente.representanteLegal.nome}}, inscrito no CPF sob o nº {{cliente.representanteLegal.cpf}}.\n\nPelo presente instrumento particular, as partes acima, devidamente qualificadas, doravante denominadas, simplesmente, CONTRATADA e CONTRATANTE, na melhor forma de direito, ajustam e contratam a prestação de serviços profissionais, segundo as cláusulas e condições adiante arroladas.\n\n## CLÁUSULA PRIMEIRA: DO OBJETO DO CONTRATO\n\nO objeto do presente consiste na prestação pela CONTRATADA à CONTRATANTE dos seguintes serviços profissionais:\n\n### 1.1. ÁREA CONTÁBIL\n1.1.1. Classificação e escrituração da contabilidade de acordo com as normas e princípios contábeis vigentes, inclusa a conciliação bancária. Tais quais, serão executados pelo CONTRATADO e seus prepostos, sendo responsabilidade do CONTRATANTE informar de forma expressa todos os dados, valores e documentos para a execução dos trabalhos.\n1.1.2. Elaboração de Balancetes, Balanço Patrimonial e DRE - Demonstração do Resultado do Exercício, conforme as regras contábeis atualmente vigentes.\n1.1.3. Os livros contábeis e fiscais gerados eletronicamente e/ou feitos/impressos devem ser registrados em órgãos competentes, e esta responsabilidade cabe ao(a) CONTRATANTE, inclusive encadernação, se for o caso.\n1.1.4. Apresentações periódicas de relatórios gerenciais para auxílio na Gestão Empresarial do CONTRATANTE.\n1.1.5. Acompanhamento anual da análise tributária para o adequado enquadramento da CONTRATANTE.\n\n### 1.2. ÁREA FISCAL\n1.2.1. Orientação e controle de aplicação dos dispositivos legais vigentes sejam federais, estaduais ou municipais.\n1.2.2. Escrituração dos registros fiscais (análise e cruzamento de dados informados nos relatórios e documentos físicos com os dados disponibilizados nos órgãos competentes: Secretaria Executiva de Estado da Fazenda, Municípios e Receita Federal).\n1.2.3. Atendimento das demais exigências previstas em atos normativos, bem como de eventuais procedimentos de fiscalização tributária.\n1.2.4. Importação e envio do SPED (conforme a escrituração dos documentos fiscais de acordo com a legalidade perante o fisco, sendo de responsabilidade do contribuinte a adequação na emissão das notas fiscais).\n\n### 1.3. ÁREA TRIBUTÁRIA ESTADUAL\n1.3.1. Emissão de guias para conhecimento e recolhimento dos tributos devidos ao Estado.\n\n### 1.4. ÁREA TRIBUTÁRIA FEDERAL\n1.4.1. Elaboração e envio das obrigações acessórias conforme o regime tributário enquadrado pela CONTRATANTE.\n\n### 1.5. ÁREA DO IMPOSTO DE RENDA PESSOA JURÍDICA\n1.5.1. Orientação e controle de aplicação dos dispositivos legais vigentes.\n1.5.2. Elaboração da declaração anual da pessoa jurídica e documentos correlatos, conforme o regime tributário enquadrado do CONTRATANTE.\n\n### 1.6. ÁREA TRABALHISTA E PREVIDENCIÁRIA\n1.6.1. Orientação e controle da aplicação dos preceitos da Consolidação das Leis do Trabalho, bem como aqueles atinentes à Previdência Social, PIS, FGTS e outros aplicáveis às relações de emprego mantidas pela CONTRATANTE.\n1.6.2. Manutenção dos Registros de Empregados e serviços correlatos, não cabendo ao CONTRATADO recrutamento e/ou levantamento de cadastros em órgãos, delegacias (todas) e referências em empregos anteriores.\n1.6.3. Elaboração da Folha de Pagamento dos empregados e de Pró-Labore, bem como das guias de recolhimento dos encargos sociais e tributos afins.\n\nPARÁGRAFO ÚNICO: Caso haja mudança na forma de tributação ou movimentação mensal da CONTRATANTE, a CONTRATADA formalizará de forma expressa eventual ajuste dos honorários previstos na Cláusula Quarta, item 4.2.\n\n## CLÁUSULA SEGUNDA — DAS CONDIÇÕES DE EXECUÇÃO DOS SERVIÇOS\n\nOs serviços serão executados nas dependências da CONTRATADA, em obediência às seguintes condições:\n\n2.1. A documentação indispensável para o desempenho dos serviços arrolados na Cláusula Primeira será fornecida pela CONTRATANTE, consistindo, basicamente, em:\n2.1.1. Boletim de caixa e documentos nele constantes, operacionalizados na Plataforma Financeira.\n2.1.2. Extratos de todas as contas correntes bancárias, inclusive aplicações; nos formatos PDF e OFX (arquivo eletrônico); e documentos relativos aos lançamentos, tais como depósitos, cópias de cheques, borderôs de cobrança, descontos, contratos de crédito, avisos de créditos, débitos etc.\n2.1.3. Notas Fiscais de compra (entradas) e de venda (saídas), bem como comunicação de eventual cancelamento das mesmas, em formato digital.\n2.1.4. Controle de frequência dos empregados e eventual comunicação para concessão de férias, admissão ou rescisão contratual, bem como correções salariais espontâneas.\n\n2.2. A documentação deverá ser anexada à plataforma ou enviada pela CONTRATANTE de forma completa, em consonância com o item 2.5, e em boa ordem nos seguintes prazos:\n2.2.1. Até 5 (cinco) dias após o encerramento do mês, os documentos dos itens 2.1.1 e 2.1.2.\n2.2.2. Quinzenalmente, os documentos do item 2.1.3 (1ª quinzena: dias 01–15; 2ª quinzena: dias 16–31, entregue até o 2º dia útil do mês seguinte).\n2.2.3. Até o dia 25 do mês de referência, os documentos do item 2.1.4, para elaboração da folha de pagamento.\n2.2.4. No mínimo 48 (quarenta e oito) horas antes, a comunicação para dação de aviso de férias e aviso prévio de rescisão contratual de empregados, acompanhada do Registro de Empregados.\n\n2.3. A CONTRATADA compromete-se a cumprir todos os prazos estabelecidos na legislação de regência quanto aos serviços contratados, especificando-se os prazos abaixo:\n2.3.1. Entrega das guias de recolhimento de tributos e encargos trabalhistas: com antecedência de 2 (dois) dias do vencimento da obrigação.\n2.3.2. Entrega da Folha de Pagamento, recibos de pagamento salarial, de férias e demais obrigações trabalhistas: até 72 (setenta e duas) horas após o recebimento dos documentos do item 2.1.4.\n2.3.3. Entrega de Balancete: até o dia 20 do 2º mês subsequente ao período de referência.\n2.3.4. Entrega do Balanço Anual: até 30 (trinta) dias após a entrega de todos os dados necessários à sua elaboração, principalmente o Inventário Anual de Estoques, cuja execução é de responsabilidade da CONTRATANTE.\n\n2.4. A remessa de documentos entre os contratantes deverá ser feita sempre sob protocolo.\n\n2.5. A CONTRATANTE deverá operacionalizar o seu financeiro com a utilização de Plataformas Eletrônicas que possibilitam o trabalho em conjunto com a CONTRATADA, bem como o anexo e envio digital da documentação.\n\n## CLÁUSULA TERCEIRA — DOS DEVERES DA CONTRATADA\n\n3.1. A CONTRATADA desempenhará os serviços enumerados na Cláusula Primeira com todo zelo, diligência e honestidade, observada a legislação vigente, resguardando os interesses da CONTRATANTE, sem prejuízo da dignidade e independência profissionais, sujeitando-se às normas do Código de Ética Profissional do Contabilista (Resolução nº 803/96 do CFC).\n3.2. Obriga-se a CONTRATADA a fornecer à CONTRATANTE, no escritório dessa e dentro do horário normal de expediente, todas as informações relativas ao andamento dos serviços ora contratados.\n3.3. Responsabilizar-se-á a CONTRATADA por todos os documentos a ela entregues pela CONTRATANTE, enquanto permanecerem sob sua guarda, respondendo pelo seu mau uso, perda, extravio ou inutilização, salvo comprovado caso fortuito ou força maior.\n3.4. A CONTRATADA não assume nenhuma responsabilidade pelas consequências de informações, declarações ou documentação inidôneas ou incompletas apresentadas, nem por omissões próprias da CONTRATANTE.\n3.5. A CONTRATADA não se responsabiliza por informações, declarações, documentação ou multas/penalidades oriundas de obrigações não realizadas e/ou incompletas antes da assinatura do contrato.\n\nParágrafo Primeiro: Não é de responsabilidade da CONTRATADA a expedição de licenças perante Órgãos Públicos ou Privados em nome da CONTRATANTE (alvará do Corpo de Bombeiros, licença ambiental, vigilância sanitária etc.), cuja responsabilidade é exclusiva da CONTRATANTE.\n\n## CLÁUSULA QUARTA — DOS DEVERES DA CONTRATANTE\n\n4.1. Obriga-se a CONTRATANTE a fornecer à CONTRATADA todos os dados, documentos, informações e acessos necessários (inclusive a Órgãos Públicos e Instituições Financeiras) em tempo hábil, sendo de sua responsabilidade a legalidade e idoneidade dos documentos apresentados.\n\n4.2. Honorários: a CONTRATANTE pagará à CONTRATADA os honorários profissionais correspondentes a **{{contrato.honorarios.valorMensal}}** mensais, com vencimento até o dia 02 (dois) do mês, mediante fatura (boleto ou PIX) enviada ao e-mail cadastrado com antecedência mínima de 5 dias do vencimento.\n\n4.2.1. Adicional anual equivalente a 1 parcela mensal, para o período de encerramento do exercício (DIPJ, DFC, informes de rendimento, RAIS, 13º salário, DIRF etc.).\n  Parágrafo Único: abertura de filiais/coligadas gera novo contrato/aditivo com honorários próprios por estabelecimento.\n  4.2.1.1. A parcela adicional é paga em 2 vezes, somada aos honorários de outubro e novembro.\n  4.2.1.2. Mesmo contrato iniciado em qualquer mês do exercício, a parcela adicional é devida integralmente.\n\n4.2.2. Multa de 3% + juros de mora de 1% a.m. (ou fração) sobre honorários pagos em atraso.\n\n4.2.3. Reajuste anual automático no início de cada ano, pela inflação, respeitado o **piso de 6% e o teto de 10%**.\n\n4.2.4. Parâmetro de revisão por volume: se a movimentação trimestral média superar os parâmetros-base em 20%, nova mensalidade passa a vigorar automaticamente a partir do 1º dia após o trimestre.\n\n4.2.5. Parâmetros-base dos honorários (específicos deste exemplo de contrato — tratar como variáveis por cliente):\n\n| Parâmetro | Valor (exemplo) |\n|---|---|\n| Regime de Tributação | **{{contrato.honorarios.regimeTributario}}** (ex.: Simples Nacional) |\n| Quantidade de Funcionários | **{{contrato.honorarios.qtdFuncionariosBase}}** (ex.: 05) |\n\n4.2.6. O reajuste anual (4.2.3) incide sobre o valor já revisado pelo critério de volume (4.2.4).\n\n4.2.7. Excedente de funcionários além do parâmetro-base: adicional de **R$ 45,00/mês por funcionário** (regra fixa observada nesta minuta).\n\n4.3. A CONTRATANTE não reembolsará materiais de uso geral (formulários, impressos, pastas, cópias), exceto autenticações, reconhecimento de firma, custas, emolumentos e taxas públicas, mediante recibo e comprovante.\n\n4.4. Documentos armazenados digitalmente via plataformas eletrônicas. Documentação física enviada pela CONTRATANTE é digitalizada e devolvida pela CONTRATADA, com ônus de **R$ 0,10 por documento digitalizado**, incluso no honorário mensal.\n\n4.4.1. Serviços solicitados não especificados na Cláusula Primeira são cobrados à parte como extraordinários, mediante orçamento previamente aprovado.\n\n4.5. A CONTRATANTE se obriga a fornecer, antes do encerramento do exercício social, a Carta de Responsabilidade da Administração (Art. 2º da Resolução CFC 987/03).\n\n## CLÁUSULA QUINTA — DA VIGÊNCIA E RESCISÃO\n\n5.1. Vigência a partir de **{{contrato.dataInicio}}**, por prazo indeterminado, rescindível a qualquer tempo mediante pré-aviso de 30 dias.\n5.1.1. Rescisão sem pré-aviso por escrito: multa compensatória de 2 parcelas mensais dos honorários vigentes.\n5.1.2. Dispensa de execução de serviços durante o pré-aviso não desobriga o pagamento integral dos honorários até o termo final.\n\n5.2. Transferência de serviços para outro profissional/empresa contábil: a CONTRATANTE deve informar por escrito nome, endereço, responsável e inscrição no CRC do novo responsável, sob pena de a CONTRATADA ficar desobrigada de transmitir dados/informações.\n5.2.1. Backups/cópias de sistemas são de propriedade exclusiva da CONTRATADA; se fornecidos por insistência da CONTRATANTE, cobra-se o equivalente a 3 parcelas mensais dos honorários vigentes.\n5.2.2. Obrigações acessórias pós-rescisão correm por conta e risco da CONTRATANTE.\n\n5.3. Atraso de honorários ≥ 30 dias: faculta suspensão imediata dos serviços e rescisão de pleno direito, sem prejuízo da multa do item 4.2.2.\n\n5.4. Falência/concordata da CONTRATANTE faculta rescisão pela CONTRATADA (não inclui elaboração de peças da lei de falência).\n\n5.5. Infração de qualquer cláusula rescinde o contrato de pleno direito.\n5.5.1. Multa contratual de 1 parcela mensal vigente, devida pela parte que deu causa à rescisão motivada, sem prejuízo da multa do item 4.2.2.\n\n## CLÁUSULA SEXTA — LEI GERAL DE PROTEÇÃO DE DADOS (LGPD)\n\n6.1. Partes comprometem-se a cumprir a Lei nº 13.709/2018.\n6.1.1. Tratamento de dados conforme arts. 7º e 11, limitado ao mínimo necessário.\n6.2. A CONTRATANTE é responsável por obter consentimento dos titulares (empregados, colaboradores, sócios, terceiros) para a coleta de dados necessários à execução do contrato.\n6.3. Dados armazenados em banco seguro de responsabilidade da CONTRATADA, com registro das operações e controle de acesso.\n6.3.1. A CONTRATANTE deve providenciar seu próprio banco de dados quanto aos dados de sua atividade econômica.\n6.4. Cooperação mútua quanto a direitos dos titulares e atendimento à ANPD/Órgãos Públicos/Judiciário.\n6.5. A CONTRATANTE deve comunicar formalmente seus titulares de dados sobre as condições deste contrato.\n6.6. Ao término do contrato, a CONTRATADA cessa o tratamento e descarta os dados em até 60 dias, conforme orientação da CONTRATANTE, ressalvadas as hipóteses legais de conservação.\n\n## CLÁUSULA SÉTIMA — DO FORO\n\nForo da Cidade de Sorriso – MT, com renúncia a qualquer outro, para dirimir questões de interpretação e execução, ou cláusula compromissória de arbitragem (Lei nº 9.307/96).\n\nE, por estarem justos e contratados, assinam o presente em 2 (duas) vias de igual teor, na presença de 2 (duas) testemunhas.\n\n{{contrato.localAssinatura}}, {{contrato.dataAssinatura}}.\n\nCONTRATADA: LINEAR CONTABILIDADE LTDA — Gleydson Leonan Martins dos Santos Ferreira\nCONTRATANTE: {{cliente.razaoSocial}} — {{cliente.representanteLegal.nome}}\n\nTESTEMUNHAS: ___ (Nome completo e CPF) / ___ (Nome completo e CPF)";
+const ORG_CITY = 'SORRISO';
+const STORE_KEY = 'linear-ao-vivo-v1';
+
+const MAIN = ['NOVO_LEAD','QUALIFICACAO','AGUARDANDO_RESPOSTA','QUALIFICADO','REUNIAO_AGENDADA','REUNIAO_REALIZADA','PROPOSTA_EM_PREPARACAO','PROPOSTA_ENVIADA','NEGOCIACAO','AGUARDANDO_ACEITE','ACEITO','CONTRATO','ASSINATURA','ONBOARDING','CLIENTE_ATIVO'];
+const EXIT = ['PERDIDO','DESQUALIFICADO','SEM_RESPOSTA','ADIADO','CANCELADO'];
+const ST = {NOVO_LEAD:'Novo Lead',QUALIFICACAO:'Qualificação',AGUARDANDO_RESPOSTA:'Aguardando Resposta',QUALIFICADO:'Qualificado',REUNIAO_AGENDADA:'Reunião Agendada',REUNIAO_REALIZADA:'Reunião Realizada',PROPOSTA_EM_PREPARACAO:'Proposta em Preparação',PROPOSTA_ENVIADA:'Proposta Enviada',NEGOCIACAO:'Negociação',AGUARDANDO_ACEITE:'Aguardando Aceite',ACEITO:'Aceito',CONTRATO:'Contrato',ASSINATURA:'Assinatura',ONBOARDING:'Onboarding',CLIENTE_ATIVO:'Cliente Ativo',PERDIDO:'Perdido',DESQUALIFICADO:'Desqualificado',SEM_RESPOSTA:'Sem Resposta',ADIADO:'Adiado',CANCELADO:'Cancelado'};
+const SRC = {WEBSITE:'Website',WHATSAPP:'WhatsApp',GOOGLE_ADS:'Google Ads',REFERRAL:'Indicação',INSTAGRAM:'Instagram',PHONE:'Telefone',MANUAL:'Manual',CAMPAIGN:'Campanha',LANDING_PAGE:'Landing Page',OTHER:'Outro'};
+const INT = {CONTABILIDADE:'Contabilidade',BPO_FINANCEIRO:'BPO Financeiro',FISCAL_TRIBUTARIO:'Fiscal/Tributário',DEPARTAMENTO_PESSOAL:'Departamento Pessoal',ASSESSORIA_FINANCEIRA_GESTAO:'Assessoria Financeira/Gestão',CFO_AS_A_SERVICE:'CFO as a Service',OUTRO:'Outro'};
+const TEMP = {QUENTE:'Quente',MORNO:'Morno',FRIO:'Frio'};
+const PRIO = {ALTA:'Alta',MEDIA:'Média',BAIXA:'Baixa'};
+const PST = {RASCUNHO:'Rascunho',EM_REVISAO:'Em revisão',APROVADA:'Aprovada',ENVIADA:'Enviada',VISUALIZADA:'Visualizada',ACEITA:'Aceita',REJEITADA:'Rejeitada',EXPIRADA:'Expirada'};
+const CST = {RASCUNHO:'Rascunho',EM_REVISAO:'Em revisão',PRONTO_PARA_ASSINATURA:'Pronto para assinatura',ENVIADO_PARA_ASSINATURA:'Enviado para assinatura',ASSINADO:'Assinado',CANCELADO:'Cancelado'};
+const MST = {AGENDADA:'Agendada',REALIZADA:'Realizada',CANCELADA:'Cancelada'};
+const SLOTS = [9,10,11,14,15,16];
+
+// Perguntas de qualificação — seção 4 da especificação (mesmo texto do sistema real).
+const CHECKLIST = {
+  CONTABILIDADE:['Qual atividade da empresa?','Qual faturamento médio mensal?','Qual regime tributário?','Quantos funcionários?','A empresa já possui contador?','Por que está buscando mudança?','Há quanto tempo está operando?','Possui pendências?','Possui parcelamentos?','Quais serviços espera da nova contabilidade?'],
+  BPO_FINANCEIRO:['Quantas contas bancárias?','Volume mensal de movimentações?','Quantas notas por mês?','Possui contas a pagar?','Possui contas a receber?','Possui cobrança?','Utiliza ERP?','Como faz conciliação atualmente?','Quem cuida do financeiro?','Quais principais problemas?'],
+  ASSESSORIA_FINANCEIRA_GESTAO:['Faturamento','Margem','Número de funcionários','Endividamento','Fluxo de caixa','Metas','Expansão','Principais decisões atuais','Principais dificuldades financeiras'],
+  CFO_AS_A_SERVICE:['Faturamento','Margem','Número de funcionários','Endividamento','Fluxo de caixa','Metas','Expansão','Principais decisões atuais','Principais dificuldades financeiras'],
+  DEPARTAMENTO_PESSOAL:['Número de funcionários','Regime','Folha atual','Sistema utilizado','Volume de admissões','Volume de rescisões','Problemas atuais'],
+};
+// Critérios do score — seção 5 (pesos configuráveis no sistema real).
+const SCORING = [
+  {key:'completeness_lead',label:'Completude dos dados do lead',weight:30},
+  {key:'completeness_checklist',label:'Completude do checklist de qualificação',weight:25},
+  {key:'interest_count',label:'Quantidade de interesses identificados',weight:15},
+  {key:'company_size',label:'Porte da empresa (faturamento/funcionários)',weight:20},
+  {key:'origin_quality',label:'Qualidade da origem do lead',weight:10},
+];
+const ORIGIN_QUALITY = {REFERRAL:100,WHATSAPP:80,WEBSITE:70,LANDING_PAGE:70,PHONE:65,GOOGLE_ADS:60,CAMPAIGN:60,INSTAGRAM:55,MANUAL:50,OTHER:40};
+const EVENT_LABEL = {
+  'lead.created':'Lead criado','lead.updated':'Dados do lead atualizados','lead.interest_added':'Interesse adicionado',
+  'checklist.generated':'Checklist de qualificação gerado','checklist.item_answered':'Pergunta do checklist respondida',
+  'lead.score_updated':'Score recalculado','lead.stage_changed':'Etapa do funil alterada','lead.qualified':'Lead qualificado',
+  'meeting.scheduled':'Reunião agendada','meeting.status_changed':'Status da reunião alterado','meeting.transcript_updated':'Transcrição registrada',
+  'meeting.report_saved':'Relatório da reunião salvo','meeting.insight_added':'Insight comercial registrado','meeting.insight_removed':'Insight removido',
+  'pricing_rule.created':'Preço cadastrado','pricing_rule.updated':'Preço atualizado',
+  'proposal.drafted':'Proposta montada','proposal.item_adjusted':'Item da proposta ajustado','proposal.approved':'Proposta aprovada',
+  'proposal.sent':'Proposta enviada','proposal.accepted':'Proposta aceita','proposal.rejected':'Proposta rejeitada',
+  'proposal.follow_up_logged':'Follow-up registrado','proposal.follow_up_stopped':'Follow-up encerrado',
+  'contract.drafted':'Contrato gerado do template','contract.edited':'Texto do contrato editado','contract.reviewed':'Contrato revisado',
+  'contract.sent_for_signature':'Contrato enviado para assinatura','contract.signed':'Contrato assinado','contract.cancelled':'Contrato cancelado',
+};
+
+// ---------------------------- utilitários ----------------------------
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const pad = n => String(n).padStart(2, '0');
+const blank = v => v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
+const clean = v => blank(v) ? null : String(v).trim();
+const numOrNull = v => blank(v) ? null : (Number.isFinite(Number(String(v).replace(',', '.'))) ? Number(String(v).replace(',', '.')) : null);
+const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const NI = '<span class="ni">não informado</span>';
+const show = v => blank(v) ? NI : esc(v);
+let seedClock = null;
+function nowISO(){ if (seedClock !== null){ seedClock += 41 * 60000; return new Date(seedClock).toISOString(); } return new Date().toISOString(); }
+function fmtDT(iso){ if (!iso) return NI; const d = new Date(iso); return isNaN(d) ? NI : d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtD(iso){ if (!iso) return NI; const d = new Date(iso); return isNaN(d) ? NI : d.toLocaleDateString('pt-BR'); }
+function ymdToBR(ymd){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : null; }
+function localSlotLabel(s){ const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); return m ? `${m[3]}/${m[2]}/${m[1]} às ${m[4]}:${m[5]}` : s; }
+function todayYMD(offsetDays = 0){ const d = new Date(Date.now() + offsetDays * 86400000); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function todayCuiabaBR(){ return new Intl.DateTimeFormat('pt-BR', {timeZone:'America/Cuiaba', day:'2-digit', month:'2-digit', year:'numeric'}).format(new Date()); }
+
+// ------------------------------ estado ------------------------------
+let db = null;
+const ui = { route:{name:'leads'}, open:{}, filters:{}, scheduleDate:{}, signUrls:{}, missing:{}, confirmReset:false, hideTour:false };
+let silent = false;
+function load(){ try { const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } }
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch {} }
+try { ui.hideTour = localStorage.getItem(STORE_KEY + ':tour') === 'off'; } catch {}
+
+function emit(name, leadId, payload = {}){ db.events.unshift({id:uid(), name, leadId: leadId || null, payload, at: nowISO()}); }
+function toast(msg, kind = 'info'){
+  if (silent) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.innerHTML = (kind === 'auto' ? '<span class="k">automático</span>' : kind === 'error' ? '<span class="k">não foi possível</span>' : '') + esc(msg);
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), kind === 'error' ? 6500 : 5000);
+}
+const leadById = id => db.leads.find(l => l.id === id);
+
+// -------------------------- regras de negócio --------------------------
+function band(v, bands){ if (v === null || v === undefined) return 0; for (const [min, s] of bands) if (v >= min) return s; return 0; }
+function computeScore(lead){
+  const interests = new Set(db.interests.filter(i => i.leadId === lead.id).map(i => i.interest)).size;
+  const items = db.checklist.filter(c => c.leadId === lead.id);
+  const answered = items.filter(c => !blank(c.answer)).length;
+  const fields = ['company','document','segment','estimatedRevenue','employeeCount','taxRegime'];
+  const filled = fields.filter(f => !blank(lead[f])).length + ((lead.phone || lead.whatsapp || lead.email) ? 1 : 0);
+  const sub = {
+    completeness_lead: filled / (fields.length + 1) * 100,
+    completeness_checklist: items.length ? answered / items.length * 100 : 0,
+    interest_count: interests >= 3 ? 100 : interests === 2 ? 85 : interests === 1 ? 60 : 0,
+    company_size: lead.estimatedRevenue != null
+      ? band(lead.estimatedRevenue, [[500000,100],[100000,80],[30000,60],[5000,40],[0.01,20]])
+      : band(lead.employeeCount, [[50,100],[20,80],[10,60],[3,40],[1,20]]),
+    origin_quality: ORIGIN_QUALITY[lead.source] ?? 0,
+  };
+  const rows = SCORING.map(c => ({...c, sub: Math.round(sub[c.key])}));
+  const total = rows.reduce((s, c) => s + c.weight, 0);
+  const score = total ? Math.round(rows.reduce((s, c) => s + c.sub * c.weight, 0) / total) : 0;
+  return {score, temperature: score >= 70 ? 'QUENTE' : score >= 40 ? 'MORNO' : 'FRIO', rows};
+}
+function recalc(lead){
+  const prev = lead.score, r = computeScore(lead);
+  if (prev === r.score && lead.temperature === r.temperature) return;
+  lead.score = r.score; lead.temperature = r.temperature;
+  emit('lead.score_updated', lead.id, {de: prev, para: r.score, auto: true});
+  if (prev != null) toast(`Score recalculado sozinho: ${prev} → ${r.score} (${TEMP[r.temperature]})`, 'auto');
+}
+function changeStage(lead, to, reason, by){
+  if (EXIT.includes(to) && blank(reason)) throw new Error(`Informe o motivo para mover o lead para "${ST[to]}" — é obrigatório em estados de saída.`);
+  if (lead.status === to) throw new Error('O lead já está nessa etapa.');
+  const by2 = clean(by) || 'sistema';
+  db.history.push({id:uid(), leadId:lead.id, from:lead.status, to, reason:clean(reason), by:by2, at:nowISO()});
+  emit('lead.stage_changed', lead.id, {de:lead.status, para:to, auto: by2 === 'sistema'});
+  if (to === 'QUALIFICADO') emit('lead.qualified', lead.id);
+  lead.status = to; lead.updatedAt = nowISO();
+}
+function advanceTo(lead, target){
+  const cur = MAIN.indexOf(lead.status), tgt = MAIN.indexOf(target);
+  if (cur < tgt){ const from = lead.status; changeStage(lead, target, null, 'sistema'); toast(`Funil avançado sozinho: ${ST[from]} → ${ST[target]}`, 'auto'); }
+}
+function createLead(d){
+  if (blank(d.name)) throw new Error('Informe o nome do lead.');
+  if (blank(d.source)) throw new Error('Informe a origem do lead.');
+  const lead = {id:uid(), name:clean(d.name), company:clean(d.company), document:clean(d.document), phone:clean(d.phone), whatsapp:clean(d.whatsapp), email:clean(d.email),
+    city:clean(d.city), state:clean(d.state), source:d.source, segment:clean(d.segment), estimatedRevenue:numOrNull(d.estimatedRevenue), employeeCount:numOrNull(d.employeeCount),
+    taxRegime:clean(d.taxRegime), notes:clean(d.notes), addressLine:null, addressNumber:null, addressComplement:null, neighborhood:null, zipCode:null,
+    legalRepresentativeName:null, legalRepresentativeCpf:null, status:'NOVO_LEAD', score:null, temperature:null, createdAt:nowISO(), updatedAt:nowISO()};
+  db.leads.unshift(lead);
+  emit('lead.created', lead.id, {origem: SRC[lead.source]});
+  recalc(lead);
+  return lead;
+}
+const LEAD_FIELDS = ['company','document','phone','whatsapp','email','city','state','segment','taxRegime','notes','addressLine','addressNumber','addressComplement','neighborhood','zipCode','legalRepresentativeName','legalRepresentativeCpf'];
+function updateLead(lead, d){
+  const changed = [];
+  if (!blank(d.name) && d.name.trim() !== lead.name){ lead.name = d.name.trim(); changed.push('name'); }
+  for (const f of LEAD_FIELDS){ if (f in d){ const v = clean(d[f]); if (v !== lead[f]){ lead[f] = v; changed.push(f); } } }
+  for (const f of ['estimatedRevenue','employeeCount']){ if (f in d){ const v = numOrNull(d[f]); if (v !== lead[f]){ lead[f] = v; changed.push(f); } } }
+  if (!changed.length){ toast('Nada mudou nos dados.'); return; }
+  lead.updatedAt = nowISO();
+  emit('lead.updated', lead.id, {campos: changed.length});
+  toast('Dados do lead salvos.');
+  recalc(lead);
+}
+function addInterest(lead, interest){
+  if (!INT[interest]) throw new Error('Escolha um interesse.');
+  db.interests.push({id:uid(), leadId:lead.id, interest, source:'MANUAL', at:nowISO()});
+  emit('lead.interest_added', lead.id, {interesse: INT[interest]});
+  const tpl = CHECKLIST[interest] || [];
+  const existing = new Set(db.checklist.filter(c => c.leadId === lead.id && c.interest === interest).map(c => c.question));
+  const novas = tpl.filter(q => !existing.has(q));
+  novas.forEach(q => db.checklist.push({id:uid(), leadId:lead.id, interest, question:q, order:tpl.indexOf(q), answer:null, answeredAt:null}));
+  if (novas.length){ emit('checklist.generated', lead.id, {interesse: INT[interest], perguntas: novas.length, auto: true}); toast(`Checklist gerado sozinho: ${novas.length} perguntas de ${INT[interest]}`, 'auto'); }
+  else if (!tpl.length) toast(`Não há perguntas cadastradas para ${INT[interest]} — o sistema não inventa perguntas.`);
+  recalc(lead);
+}
+function answerItem(item, answer){
+  if (blank(answer)) throw new Error('A resposta não pode ficar vazia.');
+  item.answer = answer.trim(); item.answeredAt = nowISO();
+  emit('checklist.item_answered', item.leadId, {pergunta: item.question});
+  recalc(leadById(item.leadId));
+}
+function availability(ymd){
+  const booked = new Set(db.meetings.filter(m => m.status === 'AGENDADA' && m.scheduledAt.slice(0, 10) === ymd).map(m => Number(m.scheduledAt.slice(11, 13))));
+  return SLOTS.map(h => ({h, free: !booked.has(h)}));
+}
+function scheduleMeeting(lead, ymd, hour, emails){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd || '')) throw new Error('Escolha a data da reunião.');
+  if (blank(hour)) throw new Error('Escolha um dos horários livres.');
+  const h = Number(hour);
+  if (!availability(ymd).find(s => s.h === h && s.free)) throw new Error('Esse horário já está ocupado no calendário da Linear.');
+  const list = String(emails || '').split(',').map(s => s.trim()).filter(Boolean);
+  const bad = list.find(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+  if (bad) throw new Error(`E-mail inválido: ${bad}`);
+  const code = uid().slice(0, 3) + '-' + uid().slice(0, 4) + '-' + uid().slice(0, 3);
+  db.meetings.push({id:uid(), leadId:lead.id, scheduledAt:`${ymd}T${pad(h)}:00`, durationMinutes:60, status:'AGENDADA', participantEmails:list,
+    meetLink:`https://meet.google.com/${code}`, transcriptText:null, report:null, insights:[], createdAt:nowISO()});
+  emit('meeting.scheduled', lead.id, {quando: `${ymdToBR(ymd)} ${pad(h)}:00`});
+  toast('Reunião criada com link de vídeo (integração Google simulada)', 'auto');
+  advanceTo(lead, 'REUNIAO_AGENDADA');
+}
+function nextFollowUp(p){
+  if (!p.sentAt) return null;
+  const sent = new Date(p.sentAt).getTime(), now = Date.now();
+  for (const d of [1, 3, 7]){ const t = sent + d * 86400000; if (t > now) return new Date(t).toISOString(); }
+  return null;
+}
+function draftProposal(lead){
+  const interests = [...new Set(db.interests.filter(i => i.leadId === lead.id).map(i => i.interest))];
+  if (!interests.length) throw new Error('Este lead ainda não tem nenhum interesse. Adicione um interesse antes de gerar a proposta.');
+  const items = [], missing = [];
+  for (const s of interests){ const r = db.pricing.find(p => p.service === s && p.active); if (r) items.push({id:uid(), service:s, basePrice:r.basePrice, finalPrice:r.basePrice, notes:''}); else missing.push(s); }
+  if (!items.length) throw new Error(`Nenhum dos interesses (${missing.map(s => INT[s]).join(', ')}) tem preço cadastrado. Cadastre em "Preços" — o sistema nunca inventa preço.`);
+  const version = Math.max(0, ...db.proposals.filter(p => p.leadId === lead.id).map(p => p.version)) + 1;
+  const p = {id:uid(), leadId:lead.id, version, status:'RASCUNHO', items, totalValue: items.reduce((s, i) => s + i.finalPrice, 0),
+    approvedBy:null, approvedAt:null, sentAt:null, acceptedAt:null, rejectedAt:null, rejectionReason:null, lastFollowUpAt:null, followUpStoppedReason:null, createdAt:nowISO()};
+  db.proposals.push(p);
+  ui.missing[p.id] = missing;
+  emit('proposal.drafted', lead.id, {versao: version, total: brl(p.totalValue), auto: true});
+  toast(`Proposta v${version} montada sozinha a partir dos interesses e da tabela de preços: ${brl(p.totalValue)}`, 'auto');
+}
+function draftContract(lead, startYmd, location){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startYmd || '')) throw new Error('Informe a data de início do contrato.');
+  const accepted = db.proposals.filter(p => p.leadId === lead.id && p.status === 'ACEITA').sort((a, b) => b.version - a.version)[0];
+  if (!accepted) throw new Error('É necessário ter uma proposta aceita antes de gerar um contrato.');
+  const vars = {
+    'cliente.razaoSocial': lead.company || lead.name,
+    'cliente.cnpj': lead.document, 'cliente.logradouro': lead.addressLine, 'cliente.numero': lead.addressNumber,
+    'cliente.bairro': lead.neighborhood, 'cliente.municipio': lead.city, 'cliente.uf': lead.state, 'cliente.cep': lead.zipCode,
+    'cliente.representanteLegal.nome': lead.legalRepresentativeName, 'cliente.representanteLegal.cpf': lead.legalRepresentativeCpf,
+    'contrato.honorarios.valorMensal': brl(accepted.totalValue),
+    'contrato.honorarios.regimeTributario': lead.taxRegime,
+    'contrato.honorarios.qtdFuncionariosBase': lead.employeeCount == null ? null : String(lead.employeeCount),
+    'contrato.dataInicio': ymdToBR(startYmd),
+    'contrato.localAssinatura': clean(location) || ORG_CITY,
+    'contrato.dataAssinatura': todayCuiabaBR(),
+  };
+  let body = CONTRACT_TEMPLATE;
+  for (const [k, v] of Object.entries(vars)) body = body.split(`{{${k}}}`).join(blank(v) ? `[PENDENTE: ${k}]` : v);
+  const version = Math.max(0, ...db.contracts.filter(c => c.leadId === lead.id).map(c => c.version)) + 1;
+  const c = {id:uid(), leadId:lead.id, proposalVersion:accepted.version, version, status:'RASCUNHO', filledBody:body, startDate:startYmd,
+    signatureLocation:clean(location) || ORG_CITY, reviewedBy:null, reviewedAt:null, sentForSignatureAt:null, signedAt:null, signatureProviderRef:null, createdAt:nowISO()};
+  db.contracts.push(c);
+  const pend = pendingOf(c);
+  emit('contract.drafted', lead.id, {versao: version, pendencias: pend.length, auto: true});
+  toast(`Contrato v${version} gerado do template aprovado pela Linear${pend.length ? ` — ${pend.length} campo(s) pendente(s), nada foi inventado` : ''}`, 'auto');
+  ui.open['ctext:' + c.id] = true;
+}
+const pendingOf = c => [...new Set([...c.filledBody.matchAll(/\[PENDENTE: ([^\]]+)\]/g)].map(m => m[1]))];
+
+// ------------------------------- seed -------------------------------
+function seed(){
+  db = {leads:[], interests:[], checklist:[], history:[], meetings:[], pricing:[], proposals:[], contracts:[], events:[]};
+  silent = true; seedClock = Date.now() - 6 * 86400000;
+  const price = (service, basePrice, billingPeriod, notes) => db.pricing.push({id:uid(), service, basePrice, billingPeriod, notes, active:true});
+  price('CONTABILIDADE', 550, 'mensal', 'Valor fictício de demonstração');
+  price('BPO_FINANCEIRO', 390, 'mensal', 'Valor fictício de demonstração');
+  price('DEPARTAMENTO_PESSOAL', 290, 'mensal', 'Valor fictício de demonstração');
+
+  const juliana = createLead({name:'Juliana Rocha', company:'JR Estética e Bem-Estar', source:'INSTAGRAM', segment:'Serviços de estética', estimatedRevenue:'22000', employeeCount:'3', city:'Sinop', state:'MT', whatsapp:'(66) 98811-2040'});
+  addInterest(juliana, 'CONTABILIDADE');
+  changeStage(juliana, 'QUALIFICACAO', null, 'Ana (Comercial)');
+  changeStage(juliana, 'PERDIDO', 'Fechou com um contador indicado por um parente.', 'Ana (Comercial)');
+
+  const marcos = createLead({name:'Marcos Tavares', company:'Tavares Agropecuária LTDA', document:'33.402.118/0001-07', source:'GOOGLE_ADS', segment:'Agronegócio — soja e milho', estimatedRevenue:'950000', employeeCount:'42', taxRegime:'Lucro Real', city:'Sorriso', state:'MT', email:'marcos@tavaresagro.com.br'});
+  addInterest(marcos, 'CFO_AS_A_SERVICE'); addInterest(marcos, 'DEPARTAMENTO_PESSOAL');
+  db.checklist.filter(c => c.leadId === marcos.id).slice(0, 4).forEach((c, i) => answerItem(c, ['Cerca de R$ 950 mil/mês, sazonal com a safra','Margem apertada em ano de preço baixo','42 fixos, até 70 na colheita','Financiamento de máquinas e custeio'][i]));
+  changeStage(marcos, 'QUALIFICACAO', null, 'Carlos (Comercial)');
+  changeStage(marcos, 'QUALIFICADO', null, 'Carlos (Comercial)');
+
+  const paulo = createLead({name:'Paulo Henrique Lima', company:'PH Transportes', source:'PHONE', segment:'Transporte rodoviário de cargas', employeeCount:'25', city:'Lucas do Rio Verde', state:'MT', phone:'(65) 3549-7781'});
+  changeStage(paulo, 'AGUARDANDO_RESPOSTA', null, 'Ana (Comercial)');
+
+  const fernanda = createLead({name:'Fernanda Albuquerque', company:'Albuquerque Materiais de Construção LTDA', document:'21.345.987/0001-54', phone:'(66) 99887-1234',
+    email:'fernanda@albuquerquemateriais.com.br', city:'Sorriso', state:'MT', source:'REFERRAL', segment:'Materiais de construção', estimatedRevenue:'180000', employeeCount:'14', taxRegime:'Lucro Presumido',
+    notes:'Indicação de cliente atual. Insatisfeita com o contador atual: relatou atrasos recorrentes nas obrigações fiscais.'});
+  Object.assign(fernanda, {addressLine:'AV. DOS IMIGRANTES', addressNumber:'1450', legalRepresentativeName:'FERNANDA ALBUQUERQUE'});
+  addInterest(fernanda, 'CONTABILIDADE'); addInterest(fernanda, 'BPO_FINANCEIRO');
+  db.checklist.filter(c => c.leadId === fernanda.id && c.interest === 'CONTABILIDADE').slice(0, 5).forEach((c, i) =>
+    answerItem(c, ['Comércio varejista e atacadista de materiais de construção','Aproximadamente R$ 180.000,00','Lucro Presumido','14 funcionários','Sim, mas está insatisfeita com os prazos'][i]));
+  changeStage(fernanda, 'QUALIFICADO', null, 'Carlos (Comercial)');
+  const past = todayYMD(-2);
+  scheduleMeeting(fernanda, past, 10, 'fernanda@albuquerquemateriais.com.br');
+  const mt = db.meetings.find(m => m.leadId === fernanda.id);
+  mt.status = 'REALIZADA'; emit('meeting.status_changed', fernanda.id, {status: 'Realizada'});
+  mt.transcriptText = 'Fernanda relatou que tem 14 funcionários e sempre tem problema no fechamento mensal. Disse que o financeiro ainda é todo em planilha.';
+  mt.report = {summary:'Cliente quer trocar de contabilidade por insatisfação com prazos. Também tem dores no controle financeiro.',
+    painPoints:'Atrasos recorrentes nas obrigações fiscais pelo contador atual. Financeiro controlado em planilha, sem conciliação.',
+    needs:'Contabilidade com prazos confiáveis + organização do financeiro.', recommendedServices:'Contabilidade completa + BPO Financeiro',
+    nextSteps:'Enviar proposta com os dois serviços.', responsiblePerson:'Carlos (Comercial)'};
+  emit('meeting.report_saved', fernanda.id);
+  mt.insights.push({id:uid(), department:'Financeiro/BPO', necessity:'Financeiro em planilha, sem conciliação — risco de erro', priority:'ALTA', suggestedService:'BPO_FINANCEIRO', at:nowISO()});
+  emit('meeting.insight_added', fernanda.id, {necessidade:'Financeiro em planilha'});
+  changeStage(fernanda, 'REUNIAO_REALIZADA', null, 'Carlos (Comercial)');
+
+  const ricardo = createLead({name:'Ricardo Menezes', company:'Padaria Pão Dourado LTDA', source:'WHATSAPP', segment:'Panificação', estimatedRevenue:'65000', employeeCount:'9', city:'Sorriso', state:'MT', whatsapp:'(66) 99640-3318',
+    notes:'Chegou pelo WhatsApp: "quero trocar de contador e organizar o financeiro".'});
+  void ricardo;
+
+  seedClock = null; silent = false;
+  db.leads.forEach(l => { const r = computeScore(l); l.score = r.score; l.temperature = r.temperature; });
+  save();
+}
+
+// ------------------------------ render ------------------------------
+function badgeStatus(s){ const exit = EXIT.includes(s); const late = MAIN.indexOf(s) >= MAIN.indexOf('ACEITO'); return `<span class="badge ${exit ? 'bad' : late ? 'ok' : 'brand'}">${esc(ST[s])}</span>`; }
+function scoreChip(l){ return l.score == null ? '<span class="badge">Sem score</span>' : `<span class="score ${l.temperature}"><span class="n num">${l.score}</span>${esc(TEMP[l.temperature])}</span>`; }
+function navigate(route){ ui.route = route; render(); window.scrollTo(0, 0); }
+
+function renderNav(){
+  const r = ui.route.name, tab = (k, label, extra = '') => `<button type="button" data-action="go" data-route="${k}" ${r === k || (k === 'leads' && (r === 'lead' || r === 'novo')) ? 'aria-current="page"' : ''}>${label}${extra}</button>`;
+  $('#nav').innerHTML = tab('leads', 'Leads', `<span class="count">${db.leads.length}</span>`) + tab('pipeline', 'Pipeline') + tab('precos', 'Preços') + tab('atividade', 'Atividade do sistema', `<span class="count">${db.events.length}</span>`);
+}
+
+function viewLeads(){
+  const f = ui.filters;
+  const rows = db.leads.filter(l =>
+    (!f.segment || (l.segment || '').toLowerCase().includes(f.segment.toLowerCase())) &&
+    (!f.document || (l.document || '').includes(f.document)) &&
+    (!f.status || l.status === f.status) &&
+    (f.minRevenue == null || (l.estimatedRevenue != null && l.estimatedRevenue >= f.minRevenue)) &&
+    (f.maxRevenue == null || (l.estimatedRevenue != null && l.estimatedRevenue <= f.maxRevenue)) &&
+    (f.minEmployees == null || (l.employeeCount != null && l.employeeCount >= f.minEmployees)) &&
+    (f.maxEmployees == null || (l.employeeCount != null && l.employeeCount <= f.maxEmployees)));
+  const tour = ui.hideTour ? '' : `<section class="tour" aria-label="Roteiro sugerido">
+    <div class="split"><b>Roteiro sugerido — 5 minutos</b><button type="button" class="link" data-action="hide-tour">Esconder</button></div>
+    <ol>
+      <li>Abra <b>Ricardo · Padaria Pão Dourado</b> e adicione o interesse <b>Contabilidade</b>: o checklist de qualificação aparece sozinho.</li>
+      <li>Responda algumas perguntas e veja o <b>score</b> subir na hora.</li>
+      <li>Agende uma reunião: o funil avança para "Reunião Agendada" sem ninguém mexer.</li>
+      <li>Abra <b>Fernanda · Albuquerque Materiais</b> (reunião já realizada): gere a proposta, aprove, envie e marque como aceita.</li>
+      <li>Gere o contrato: veja os campos <mark class="pend">[PENDENTE]</mark> — o sistema não inventa dado. Complete em "Editar dados", gere de novo, revise, envie e assine.</li>
+      <li>Abra <b>Atividade do sistema</b> para ver tudo o que aconteceu automaticamente.</li>
+    </ol></section>`;
+  return `${tour}
+  <div class="page-head"><div><h1>Leads</h1><p class="sub">Carteira do funil comercial, priorizada pelo score.</p></div>
+    <button type="button" class="btn primary" data-action="go" data-route="novo">+ Novo lead</button></div>
+  <form class="card" data-form="filters" style="margin-bottom:16px">
+    <div class="form-grid">
+      <label class="f">Ramo de Atividade<input name="segment" id="f-segment" value="${esc(f.segment || '')}" placeholder="Ex.: Agronegócio"></label>
+      <label class="f">CNPJ do cliente<input name="document" id="f-document" value="${esc(f.document || '')}" placeholder="00.000.000/0000-00"></label>
+      <label class="f">Faturamento mín. (R$)<input name="minRevenue" id="f-minr" inputmode="decimal" value="${f.minRevenue ?? ''}"></label>
+      <label class="f">Faturamento máx. (R$)<input name="maxRevenue" id="f-maxr" inputmode="decimal" value="${f.maxRevenue ?? ''}"></label>
+      <label class="f">Funcionários mín.<input name="minEmployees" id="f-mine" inputmode="numeric" value="${f.minEmployees ?? ''}"></label>
+      <label class="f">Funcionários máx.<input name="maxEmployees" id="f-maxe" inputmode="numeric" value="${f.maxEmployees ?? ''}"></label>
+      <label class="f">Etapa<select name="status" id="f-status"><option value="">Todas</option>${[...MAIN, ...EXIT].map(s => `<option value="${s}" ${f.status === s ? 'selected' : ''}>${ST[s]}</option>`).join('')}</select></label>
+    </div>
+    <div class="row end" style="margin-top:12px"><button type="button" class="btn" data-action="clear-filters">Limpar</button><button class="btn primary">Filtrar</button></div>
+  </form>
+  ${rows.length ? `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Score</th><th>Empresa</th><th>Ramo de atividade</th><th>Faturamento</th><th>Funcionários</th><th>CNPJ</th><th>Etapa</th><th></th></tr></thead><tbody>
+    ${rows.map(l => `<tr><td><b>${esc(l.name)}</b></td><td>${scoreChip(l)}</td><td>${show(l.company)}</td><td>${show(l.segment)}</td>
+      <td class="num">${l.estimatedRevenue == null ? NI : brl(l.estimatedRevenue)}</td><td class="num">${l.employeeCount == null ? NI : l.employeeCount}</td>
+      <td class="num">${show(l.document)}</td><td>${badgeStatus(l.status)}</td>
+      <td><button type="button" class="btn small" data-action="open-lead" data-id="${l.id}">Abrir</button></td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="card empty">Nenhum lead encontrado para os filtros aplicados.</div>'}`;
+}
+
+function viewNovo(){
+  return `<button type="button" class="link" data-action="go" data-route="leads">← Voltar para leads</button>
+  <div class="page-head" style="margin-top:10px"><div><h1>Novo lead</h1><p class="sub">Só nome e origem são obrigatórios. O que não for preenchido aparece como "não informado" — nada é inventado.</p></div></div>
+  <form class="card" data-form="create-lead">
+    <div class="form-grid">
+      <label class="f">Nome *<input name="name" id="n-name" required></label>
+      <label class="f">Origem *<select name="source" id="n-source" required><option value="">Selecione…</option>${Object.entries(SRC).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+      <label class="f">Empresa<input name="company" id="n-company"></label>
+      <label class="f">CNPJ/CPF<input name="document" id="n-document"></label>
+      <label class="f">Telefone<input name="phone" id="n-phone"></label>
+      <label class="f">WhatsApp<input name="whatsapp" id="n-whatsapp"></label>
+      <label class="f">E-mail<input name="email" id="n-email" type="email"></label>
+      <label class="f">Cidade<input name="city" id="n-city"></label>
+      <label class="f">UF<input name="state" id="n-state" maxlength="2"></label>
+      <label class="f">Ramo de atividade<input name="segment" id="n-segment"></label>
+      <label class="f">Faturamento mensal (R$)<input name="estimatedRevenue" id="n-rev" inputmode="decimal"></label>
+      <label class="f">Nº de funcionários<input name="employeeCount" id="n-emp" inputmode="numeric"></label>
+      <label class="f">Regime tributário<input name="taxRegime" id="n-tax" placeholder="Ex.: Simples Nacional"></label>
+    </div>
+    <label class="f" style="margin-top:12px">Observações<textarea name="notes" id="n-notes" rows="2"></textarea></label>
+    <div class="row end" style="margin-top:14px"><button class="btn primary">Criar lead</button></div>
+  </form>`;
+}
+
+function sectionDados(l){
+  const editing = ui.open['edit:' + l.id];
+  const val = f => esc(l[f] ?? '');
+  const field = (f, label, extra = '') => `<label class="f">${label}<input name="${f}" id="e-${f}" value="${val(f)}" ${extra}></label>`;
+  return `<section class="card">
+    <div class="card-head"><h2>Dados do lead</h2><button type="button" class="btn small" data-action="toggle" data-key="edit:${l.id}">${editing ? 'Fechar edição' : 'Editar dados'}</button></div>
+    ${editing ? `<form data-form="edit-lead" data-id="${l.id}">
+      <div class="form-grid">
+        ${field('name', 'Nome')}${field('company', 'Empresa (razão social)')}${field('document', 'CNPJ/CPF')}${field('phone', 'Telefone')}${field('whatsapp', 'WhatsApp')}
+        ${field('email', 'E-mail')}${field('segment', 'Ramo de atividade')}${field('estimatedRevenue', 'Faturamento mensal (R$)', 'inputmode="decimal"')}
+        ${field('employeeCount', 'Nº de funcionários', 'inputmode="numeric"')}${field('taxRegime', 'Regime tributário')}
+      </div>
+      <h3 style="margin:16px 0 8px">Endereço e representante legal (usados no contrato)</h3>
+      <div class="form-grid">
+        ${field('addressLine', 'Logradouro')}${field('addressNumber', 'Número')}${field('addressComplement', 'Complemento')}${field('neighborhood', 'Bairro')}
+        ${field('city', 'Município')}${field('state', 'UF', 'maxlength="2"')}${field('zipCode', 'CEP')}${field('legalRepresentativeName', 'Representante legal')}${field('legalRepresentativeCpf', 'CPF do representante')}
+      </div>
+      <label class="f" style="margin-top:12px">Observações<textarea name="notes" id="e-notes" rows="2">${val('notes')}</textarea></label>
+      <div class="row end" style="margin-top:12px"><button class="btn primary">Salvar dados</button></div>
+    </form>` : `<dl class="dl">
+      ${[['Empresa', show(l.company)], ['CNPJ/CPF', show(l.document)], ['Telefone', show(l.phone)], ['WhatsApp', show(l.whatsapp)], ['E-mail', show(l.email)],
+         ['Município/UF', blank(l.city) && blank(l.state) ? NI : esc([l.city, l.state].filter(Boolean).join('/'))], ['Origem', esc(SRC[l.source])], ['Ramo de atividade', show(l.segment)],
+         ['Faturamento mensal', l.estimatedRevenue == null ? NI : brl(l.estimatedRevenue)], ['Nº de funcionários', l.employeeCount == null ? NI : l.employeeCount], ['Regime tributário', show(l.taxRegime)],
+         ['Endereço', blank(l.addressLine) ? NI : esc([l.addressLine, l.addressNumber, l.neighborhood].filter(Boolean).join(', '))], ['Representante legal', show(l.legalRepresentativeName)]]
+        .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}
+    </dl>${l.notes ? `<hr class="sep"><p style="margin:0"><span class="faint">Observações · </span>${esc(l.notes)}</p>` : ''}`}
+  </section>`;
+}
+
+function sectionInteresses(l){
+  const list = db.interests.filter(i => i.leadId === l.id);
+  return `<section class="card"><div class="card-head"><h2>Interesses</h2><span class="faint">Um lead pode ter vários</span></div>
+    ${list.length ? `<div class="row">${list.map(i => `<span class="badge brand">${esc(INT[i.interest])}</span>`).join('')}</div>` : '<p class="muted" style="margin:0">Nenhum interesse ainda.</p>'}
+    <form class="row" data-form="add-interest" data-id="${l.id}" style="margin-top:12px">
+      <select name="interest" id="i-${l.id}" style="max-width:280px" aria-label="Interesse"><option value="">Adicionar interesse…</option>${Object.entries(INT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <button class="btn">Adicionar</button>
+    </form></section>`;
+}
+
+function sectionChecklist(l){
+  const items = db.checklist.filter(c => c.leadId === l.id);
+  if (!items.length) return `<section class="card"><div class="card-head"><h2>Checklist de qualificação</h2></div><p class="muted" style="margin:0">Adicione um interesse e o checklist com as perguntas certas para aquele serviço é gerado automaticamente.</p></section>`;
+  const done = items.filter(c => !blank(c.answer)).length;
+  const groups = {};
+  items.forEach(c => (groups[c.interest] ||= []).push(c));
+  return `<section class="card"><div class="card-head"><h2>Checklist de qualificação</h2><span class="num muted">${done}/${items.length} respondidas</span></div>
+    <div class="progress" style="margin-bottom:8px"><span style="width:${Math.round(done / items.length * 100)}%"></span></div>
+    ${Object.entries(groups).map(([k, qs]) => `<h3 style="margin-top:14px">${esc(INT[k])}</h3>
+      ${qs.sort((a, b) => a.order - b.order).map(c => `<form class="q" data-form="answer" data-id="${c.id}">
+        <span class="dot ${blank(c.answer) ? '' : 'on'}"></span>
+        <div style="min-width:0"><label for="a-${c.id}" style="font-weight:500">${esc(c.question)}</label>
+          <div class="row" style="margin-top:6px;flex-wrap:nowrap"><input name="answer" id="a-${c.id}" value="${esc(c.answer || '')}" placeholder="Resposta…"><button class="btn small">Salvar</button></div></div>
+      </form>`).join('')}`).join('')}
+  </section>`;
+}
+
+function meetingBlock(l, m){
+  const key = 'mt:' + m.id, open = ui.open[key], r = m.report || {};
+  const t = (f, label) => `<label class="f">${label}<textarea name="${f}" id="r-${f}-${m.id}" rows="2">${esc(r[f] || '')}</textarea></label>`;
+  return `<li class="item">
+    <div class="split"><div><b class="num">${esc(localSlotLabel(m.scheduledAt))}</b> <span class="faint">· ${m.durationMinutes} min</span>
+      <div class="muted" style="font-size:12.5px">${m.participantEmails.length ? esc(m.participantEmails.join(', ')) : 'Sem participantes externos'} · <a href="${esc(m.meetLink)}" target="_blank" rel="noopener noreferrer" class="link">link do Meet</a></div></div>
+      <span class="badge ${m.status === 'REALIZADA' ? 'ok' : m.status === 'CANCELADA' ? 'bad' : 'info'}">${MST[m.status]}</span></div>
+    <div class="row" style="margin-top:10px">
+      ${m.status === 'AGENDADA' ? `<button type="button" class="btn small" data-action="meeting-status" data-id="${m.id}" data-status="REALIZADA">Marcar como realizada</button><button type="button" class="btn small danger" data-action="meeting-status" data-id="${m.id}" data-status="CANCELADA">Cancelar</button>` : ''}
+      <button type="button" class="btn small" data-action="toggle" data-key="${key}">${open ? 'Fechar relatório' : 'Transcrição, relatório e insights'}</button>
+    </div>
+    ${open ? `<hr class="sep">
+      <div class="notice info" style="margin-bottom:12px">Preenchido por quem participou da reunião. A estrutura já está pronta para uma IA sugerir um rascunho quando a Linear ativar isso.</div>
+      <form data-form="transcript" data-id="${m.id}"><label class="f">Transcrição (colar)<textarea name="transcriptText" id="tr-${m.id}" rows="3">${esc(m.transcriptText || '')}</textarea></label>
+        <div class="row end" style="margin-top:8px"><button class="btn small">Salvar transcrição</button></div></form>
+      <form data-form="report" data-id="${m.id}" style="margin-top:12px"><div class="form-grid">
+        ${t('summary', 'Resumo executivo')}${t('painPoints', 'Dores identificadas')}${t('needs', 'Necessidades')}${t('objections', 'Objeções')}${t('recommendedServices', 'Serviços recomendados')}${t('nextSteps', 'Próximos passos')}
+      </div><div class="form-grid" style="margin-top:10px"><label class="f">Responsável<input name="responsiblePerson" id="rp-${m.id}" value="${esc(r.responsiblePerson || '')}"></label></div>
+        <div class="row end" style="margin-top:8px"><button class="btn small primary">Salvar relatório</button></div></form>
+      <h3 style="margin:16px 0 8px">Insights comerciais</h3>
+      ${m.insights.length ? `<ul class="list">${m.insights.map(i => `<li class="split" style="padding:6px 0"><div style="min-width:0"><b>${esc(i.necessity)}</b><div class="muted" style="font-size:12.5px">${show(i.department)}${i.suggestedService ? ' · serviço sugerido: ' + esc(INT[i.suggestedService]) : ''}</div></div>
+        <div class="row"><span class="badge ${i.priority === 'ALTA' ? 'bad' : i.priority === 'MEDIA' ? 'warn' : ''}">${PRIO[i.priority]}</span><button type="button" class="btn small danger" data-action="del-insight" data-id="${m.id}" data-iid="${i.id}">Remover</button></div></li>`).join('')}</ul>` : '<p class="muted" style="margin:0 0 8px">Nenhum insight ainda.</p>'}
+      <form data-form="insight" data-id="${m.id}" style="margin-top:8px"><div class="form-grid">
+        <label class="f">Necessidade *<input name="necessity" id="in-n-${m.id}" placeholder="Ex.: folha com problema todo mês"></label>
+        <label class="f">Departamento<input name="department" id="in-d-${m.id}" placeholder="Ex.: DP"></label>
+        <label class="f">Prioridade *<select name="priority" id="in-p-${m.id}"><option value="">Selecione…</option>${Object.entries(PRIO).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+        <label class="f">Serviço sugerido<select name="suggestedService" id="in-s-${m.id}"><option value="">Nenhum</option>${Object.entries(INT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+      </div><div class="row end" style="margin-top:8px"><button class="btn small">Adicionar insight</button></div></form>` : ''}
+  </li>`;
+}
+
+function sectionReunioes(l){
+  const ms = db.meetings.filter(m => m.leadId === l.id).sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+  const key = 'sched:' + l.id, open = ui.open[key];
+  const date = ui.scheduleDate[l.id] || todayYMD(1);
+  return `<section class="card"><div class="card-head"><h2>Reuniões</h2><button type="button" class="btn small" data-action="toggle" data-key="${key}">${open ? 'Fechar' : '+ Agendar reunião'}</button></div>
+    <div class="notice warn" style="margin-bottom:12px">Integração com Google Agenda/Meet simulada — a conta Google real da Linear ainda não foi conectada.</div>
+    ${open ? `<form class="item" data-form="schedule" data-id="${l.id}" style="margin-bottom:12px">
+      <div class="form-grid"><label class="f">Data<input type="date" name="date" id="s-date-${l.id}" value="${date}" data-sched-date="${l.id}"></label>
+        <label class="f">Participantes (e-mails, separados por vírgula)<input name="emails" id="s-em-${l.id}" value="${esc(l.email || '')}"></label></div>
+      <fieldset style="border:none;padding:0;margin:12px 0 0"><legend class="f" style="margin-bottom:6px;font-size:12px;color:var(--muted);font-weight:500">Horários livres no calendário da Linear</legend>
+        <div class="row">${availability(date).map(s => `<label class="btn small" style="${s.free ? '' : 'opacity:.45;text-decoration:line-through;cursor:not-allowed'}"><input type="radio" name="hour" value="${s.h}" ${s.free ? '' : 'disabled'} style="width:auto"> ${pad(s.h)}:00</label>`).join('')}</div></fieldset>
+      <div class="row end" style="margin-top:12px"><button class="btn primary">Agendar reunião</button></div></form>` : ''}
+    ${ms.length ? `<ul class="list">${ms.map(m => meetingBlock(l, m)).join('')}</ul>` : '<p class="muted" style="margin:0">Nenhuma reunião ainda.</p>'}
+  </section>`;
+}
+
+function proposalBlock(l, p){
+  const editable = p.status === 'RASCUNHO' || p.status === 'EM_REVISAO';
+  const tone = {ACEITA:'ok', REJEITADA:'bad', ENVIADA:'info', APROVADA:'brand'}[p.status] || '';
+  const missing = ui.missing[p.id] || [];
+  const nf = nextFollowUp(p);
+  return `<li class="item">
+    <div class="split"><div><b>Versão ${p.version}</b> <span class="faint">· criada ${fmtDT(p.createdAt)}</span></div>
+      <div class="row"><span class="badge ${tone}">${PST[p.status]}</span><span class="price-big num">${brl(p.totalValue)}</span></div></div>
+    ${missing.length ? `<div class="notice warn" style="margin-top:10px">Ficou de fora por falta de preço cadastrado: <b>${missing.map(s => esc(INT[s])).join(', ')}</b>. <button type="button" class="link" data-action="go" data-route="precos">Cadastrar preço</button></div>` : ''}
+    <div style="margin-top:10px">${p.items.map(it => editable
+      ? `<form class="row" data-form="item" data-id="${p.id}" data-iid="${it.id}" style="padding:6px 0;border-bottom:1px solid var(--line)"><span style="flex:1 1 160px;min-width:0"><b>${esc(INT[it.service])}</b><br><span class="faint" style="font-size:12px">Tabela: ${brl(it.basePrice)}</span></span>
+          <label class="f" style="flex:0 1 130px">Preço final<input name="finalPrice" id="fp-${it.id}" value="${it.finalPrice}" inputmode="decimal"></label>
+          <label class="f" style="flex:1 1 150px">Observação<input name="notes" id="fn-${it.id}" value="${esc(it.notes || '')}"></label><button class="btn small" style="align-self:flex-end">Salvar</button></form>`
+      : `<div class="split" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(INT[it.service])}${it.notes ? ` <span class="faint">· ${esc(it.notes)}</span>` : ''}</span><span class="num">${brl(it.finalPrice)}</span></div>`).join('')}</div>
+    <div style="margin-top:12px">
+      ${editable ? `<form class="row" data-form="approve" data-id="${p.id}"><label class="f" style="flex:1 1 200px">Aprovado por<input name="approvedBy" id="ap-${p.id}" placeholder="Seu nome"></label><button class="btn primary" style="align-self:flex-end">Aprovar</button></form>` : ''}
+      ${p.status === 'APROVADA' ? `<p class="muted" style="margin:0 0 8px">Aprovada por ${esc(p.approvedBy)}.</p><button type="button" class="btn primary" data-action="p-send" data-id="${p.id}">Enviar ao cliente</button>` : ''}
+      ${p.status === 'ENVIADA' ? `<div class="row"><button type="button" class="btn good" data-action="p-accept" data-id="${p.id}">Marcar como aceita</button></div>
+        <form class="row" data-form="reject" data-id="${p.id}" style="margin-top:10px"><label class="f" style="flex:1 1 220px">Motivo da rejeição<input name="reason" id="rj-${p.id}" placeholder="Obrigatório para rejeitar"></label><button class="btn danger" style="align-self:flex-end">Rejeitar</button></form>
+        <div class="item" style="margin-top:10px;background:var(--surface)"><h3>Follow-up</h3>
+          <p style="margin:6px 0 2px">Último: ${p.lastFollowUpAt ? fmtDT(p.lastFollowUpAt) : '<span class="ni">nenhum ainda</span>'}</p>
+          <p style="margin:0 0 8px">${p.followUpStoppedReason ? `Encerrado: ${esc(p.followUpStoppedReason)}` : nf ? `Próximo sugerido (D+1/D+3/D+7 do envio): <b class="num">${fmtD(nf)}</b>` : 'Prazos de follow-up esgotados — considere encerrar.'}</p>
+          ${p.followUpStoppedReason ? '' : `<button type="button" class="btn small" data-action="p-followup" data-id="${p.id}">Registrar follow-up feito</button>`}</div>` : ''}
+      ${p.status === 'ACEITA' ? `<p class="muted" style="margin:0">Aceita em ${fmtDT(p.acceptedAt)}. Próximo passo: gerar o contrato abaixo.</p>` : ''}
+      ${p.status === 'REJEITADA' ? `<p class="muted" style="margin:0">Rejeitada em ${fmtDT(p.rejectedAt)} · motivo: ${esc(p.rejectionReason)}</p>` : ''}
+    </div></li>`;
+}
+
+function sectionPropostas(l){
+  const ps = db.proposals.filter(p => p.leadId === l.id).sort((a, b) => b.version - a.version);
+  return `<section class="card"><div class="card-head"><h2>Propostas</h2><button type="button" class="btn small primary" data-action="p-draft" data-id="${l.id}">+ Gerar proposta</button></div>
+    <p class="muted" style="margin:0 0 12px;font-size:12.5px">A proposta é montada a partir dos interesses do lead × tabela de preços configurada pela Linear. A IA nunca define preço sozinha.</p>
+    ${ps.length ? `<ul class="list">${ps.map(p => proposalBlock(l, p)).join('')}</ul>` : '<p class="muted" style="margin:0">Nenhuma proposta ainda.</p>'}</section>`;
+}
+
+function renderContractText(body){
+  return esc(body).split('\n').map(line => {
+    let out = line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\[PENDENTE: ([^\]]+)\]/g, '<mark class="pend">[PENDENTE: $1]</mark>');
+    if (/^###\s/.test(line)) return `<span class="h3">${out.replace(/^###\s/, '')}</span>`;
+    if (/^##\s/.test(line)) return `<span class="h2">${out.replace(/^##\s/, '')}</span>`;
+    return out;
+  }).join('\n');
+}
+
+function contractBlock(l, c){
+  const pend = pendingOf(c), editable = c.status === 'RASCUNHO' || c.status === 'EM_REVISAO';
+  const tone = {ASSINADO:'ok', CANCELADO:'bad', ENVIADO_PARA_ASSINATURA:'info', PRONTO_PARA_ASSINATURA:'brand', EM_REVISAO:'warn'}[c.status] || '';
+  const tk = 'ctext:' + c.id, ek = 'cedit:' + c.id;
+  return `<li class="item">
+    <div class="split"><div><b>Contrato v${c.version}</b> <span class="faint">· proposta v${c.proposalVersion} · início ${esc(ymdToBR(c.startDate))}</span></div><span class="badge ${tone}">${CST[c.status]}</span></div>
+    ${pend.length && c.status !== 'CANCELADO' ? `<div class="notice warn" style="margin-top:10px"><b>${pend.length} campo(s) pendente(s):</b> ${pend.map(esc).join(', ')}.<br>O sistema não inventa dado: complete em "Editar dados" e gere uma nova versão, ou edite o texto do contrato.</div>` : ''}
+    <div class="row" style="margin-top:10px">
+      <button type="button" class="btn small" data-action="toggle" data-key="${tk}">${ui.open[tk] ? 'Esconder texto' : 'Ver contrato completo'}</button>
+      ${editable ? `<button type="button" class="btn small" data-action="toggle" data-key="${ek}">${ui.open[ek] ? 'Fechar edição' : 'Editar texto'}</button>` : ''}
+    </div>
+    ${ui.open[ek] && editable ? `<form data-form="c-edit" data-id="${c.id}" style="margin-top:10px"><label class="f">Texto do contrato<textarea name="filledBody" id="cb-${c.id}" rows="14">${esc(c.filledBody)}</textarea></label><div class="row end" style="margin-top:8px"><button class="btn small primary">Salvar texto</button></div></form>` : ''}
+    ${ui.open[tk] ? `<div class="contract-text" style="margin-top:10px" tabindex="0" aria-label="Texto do contrato">${renderContractText(c.filledBody)}</div>` : ''}
+    <div style="margin-top:12px">
+      ${editable ? `<form class="row" data-form="c-review" data-id="${c.id}"><label class="f" style="flex:1 1 200px">Revisado por<input name="reviewedBy" id="rv-${c.id}" placeholder="Seu nome"></label><button class="btn primary" style="align-self:flex-end">Revisar</button></form>
+        <p class="faint" style="font-size:12px;margin:6px 0 0">Sem pendências, vai direto para "Pronto para assinatura". Com pendências, fica "Em revisão".</p>` : ''}
+      ${c.status === 'PRONTO_PARA_ASSINATURA' ? `<button type="button" class="btn primary" data-action="c-send" data-id="${c.id}">Enviar para assinatura</button>` : ''}
+      ${c.status === 'ENVIADO_PARA_ASSINATURA' ? `<p style="margin:0 0 8px">Enviado em ${fmtDT(c.sentForSignatureAt)}${ui.signUrls[c.id] ? ` · link de assinatura (simulado): <span class="mono" style="font-size:12px;overflow-wrap:anywhere">${esc(ui.signUrls[c.id])}</span>` : ''}</p><button type="button" class="btn good" data-action="c-signed" data-id="${c.id}">Marcar como assinado</button>` : ''}
+      ${c.status === 'ASSINADO' ? `<p style="margin:0" class="muted">Assinado em ${fmtDT(c.signedAt)}. O evento <span class="mono">contract.signed</span> foi disparado — é o gatilho do onboarding automático (próximas fases).</p>` : ''}
+      ${!['ASSINADO', 'CANCELADO'].includes(c.status) ? `<form class="row" data-form="c-cancel" data-id="${c.id}" style="margin-top:10px"><label class="f" style="flex:1 1 220px">Motivo do cancelamento<input name="reason" id="cc-${c.id}" placeholder="Obrigatório para cancelar"></label><button class="btn small danger" style="align-self:flex-end">Cancelar contrato</button></form>` : ''}
+    </div></li>`;
+}
+
+function sectionContratos(l){
+  const cs = db.contracts.filter(c => c.leadId === l.id).sort((a, b) => b.version - a.version);
+  const hasAccepted = db.proposals.some(p => p.leadId === l.id && p.status === 'ACEITA');
+  return `<section class="card"><div class="card-head"><h2>Contratos</h2></div>
+    <div class="notice warn" style="margin-bottom:12px">Gerado a partir da minuta real de prestação de serviços contábeis da Linear (template versionado). Assinatura eletrônica simulada.</div>
+    ${hasAccepted ? `<form class="row" data-form="c-draft" data-id="${l.id}" style="margin-bottom:12px"><label class="f" style="flex:0 1 170px">Início da vigência<input type="date" name="startDate" id="cd-s-${l.id}" value="${todayYMD(7)}"></label>
+      <label class="f" style="flex:1 1 170px">Local da assinatura<input name="signatureLocation" id="cd-l-${l.id}" value="${ORG_CITY}"></label><button class="btn primary" style="align-self:flex-end">Gerar contrato</button></form>`
+      : '<p class="muted" style="margin:0 0 12px">É necessário ter uma proposta aceita antes de gerar um contrato.</p>'}
+    ${cs.length ? `<ul class="list">${cs.map(c => contractBlock(l, c)).join('')}</ul>` : ''}</section>`;
+}
+
+function sideScore(l){
+  const r = computeScore(l);
+  return `<section class="card"><div class="card-head"><h2>Score do lead</h2>${scoreChip(l)}</div>
+    <p class="faint" style="font-size:12px;margin:0 0 10px">Uso interno da equipe comercial — serve para priorizar, nunca decide nada sozinho.</p>
+    <ul class="list" style="gap:10px">${r.rows.map(row => `<li><div class="split" style="font-size:12.5px"><span>${esc(row.label)} <span class="faint">· peso ${row.weight}</span></span><b class="num">${row.sub}</b></div>
+      <div class="progress" style="margin-top:4px"><span style="width:${row.sub}%;background:var(--brand)"></span></div></li>`).join('')}</ul></section>`;
+}
+function sideStage(l){
+  return `<section class="card"><div class="card-head"><h2>Mudar de etapa</h2></div>
+    <form data-form="stage" data-id="${l.id}" style="display:grid;gap:10px">
+      <label class="f">Mover para<select name="to" id="st-${l.id}"><option value="">Selecione…</option><optgroup label="Funil">${MAIN.map(s => `<option value="${s}">${ST[s]}</option>`).join('')}</optgroup><optgroup label="Saída (motivo obrigatório)">${EXIT.map(s => `<option value="${s}">${ST[s]}</option>`).join('')}</optgroup></select></label>
+      <label class="f">Motivo<textarea name="reason" id="sr-${l.id}" rows="2" placeholder="Obrigatório para Perdido, Desqualificado, Sem resposta, Adiado, Cancelado"></textarea></label>
+      <label class="f">Alterado por<input name="by" id="sb-${l.id}" placeholder="Seu nome"></label>
+      <button class="btn primary">Mudar etapa</button></form></section>`;
+}
+function sideHistory(l){
+  const hs = db.history.filter(h => h.leadId === l.id).slice().reverse();
+  return `<section class="card"><div class="card-head"><h2>Histórico de etapas</h2></div>
+    ${hs.length ? `<ul class="timeline">${hs.map(h => `<li><span class="tdot"></span><div style="min-width:0"><b>${esc(ST[h.from])} → ${esc(ST[h.to])}</b>${h.by === 'sistema' ? '<span class="chip-auto">automático</span>' : ''}
+      <div class="faint" style="font-size:12px">${fmtDT(h.at)} · por ${esc(h.by)}</div>${h.reason ? `<div class="muted" style="font-size:12.5px">Motivo: ${esc(h.reason)}</div>` : ''}</div></li>`).join('')}</ul>` : '<p class="muted" style="margin:0">Sem mudanças de etapa ainda.</p>'}</section>`;
+}
+function eventRow(e, withLead){
+  const lead = e.leadId && leadById(e.leadId);
+  return `<div class="ev"><div style="min-width:0"><b>${esc(EVENT_LABEL[e.name] || e.name)}</b>${e.payload && e.payload.auto ? '<span class="chip-auto">automático</span>' : ''}
+    ${withLead && lead ? `<span class="muted"> · ${esc(lead.name)}</span>` : ''}<div class="name">${esc(e.name)}${payloadText(e.payload)}</div></div><span class="faint num" style="font-size:12px">${fmtDT(e.at)}</span></div>`;
+}
+function payloadText(p){ if (!p) return ''; const parts = Object.entries(p).filter(([k]) => k !== 'auto').map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`); return parts.length ? ' · ' + esc(parts.join(' · ')) : ''; }
+function sideActivity(l){
+  const evs = db.events.filter(e => e.leadId === l.id).slice(0, 12);
+  return `<section class="card"><div class="card-head"><h2>Atividade deste lead</h2><button type="button" class="link" data-action="go" data-route="atividade">ver tudo</button></div>
+    ${evs.length ? evs.map(e => eventRow(e, false)).join('') : '<p class="muted" style="margin:0">Nada ainda.</p>'}</section>`;
+}
+
+function viewLead(){
+  const l = leadById(ui.route.id);
+  if (!l) return `<div class="card empty">Lead não encontrado. <button type="button" class="link" data-action="go" data-route="leads">Voltar</button></div>`;
+  return `<button type="button" class="link" data-action="go" data-route="leads">← Voltar para leads</button>
+  <div class="page-head" style="margin-top:10px"><div><h1>${esc(l.name)}</h1><p class="sub">${show(l.company)} · criado ${fmtDT(l.createdAt)}</p></div><div class="row">${badgeStatus(l.status)}${scoreChip(l)}</div></div>
+  <div class="grid2">
+    <div class="stack">${sectionDados(l)}${sectionInteresses(l)}${sectionChecklist(l)}${sectionReunioes(l)}${sectionPropostas(l)}${sectionContratos(l)}</div>
+    <div class="stack">${sideScore(l)}${sideStage(l)}${sideHistory(l)}${sideActivity(l)}</div>
+  </div>`;
+}
+
+function viewPipeline(){
+  const card = l => `<button type="button" class="pcard" data-action="open-lead" data-id="${l.id}"><b>${esc(l.name)}</b><span class="muted" style="font-size:12px">${show(l.company)}</span>${scoreChip(l)}</button>`;
+  const closed = db.leads.filter(l => EXIT.includes(l.status));
+  return `<div class="page-head"><div><h1>Pipeline</h1><p class="sub">Funil comercial completo, do primeiro contato ao cliente ativo. Clique num card para abrir o lead.</p></div></div>
+  <div class="board">${MAIN.map(s => { const ls = db.leads.filter(l => l.status === s); return `<div class="col"><h2>${ST[s]} <span class="badge num">${ls.length}</span></h2>${ls.map(card).join('') || '<p class="faint" style="font-size:12px;margin:0">Vazio</p>'}</div>`; }).join('')}
+    <div class="col"><h2>Encerrados <span class="badge num">${closed.length}</span></h2>${closed.map(l => { const h = db.history.filter(x => x.leadId === l.id && x.to === l.status).pop(); return card(l).replace('</button>', `<span class="badge bad">${ST[l.status]}</span>${h && h.reason ? `<span class="faint" style="font-size:12px">${esc(h.reason)}</span>` : ''}</button>`); }).join('') || '<p class="faint" style="font-size:12px;margin:0">Vazio</p>'}</div>
+  </div>`;
+}
+
+function viewPrecos(){
+  const used = new Set(db.pricing.map(p => p.service));
+  return `<div class="page-head"><div><h1>Preços</h1><p class="sub">A única fonte de preço usada nas propostas. Configurada pela Linear — nunca definida pela IA.</p></div></div>
+  <div class="notice warn" style="margin-bottom:16px"><b>Valores fictícios, só para esta demonstração.</b> A tabela real é cadastrada pela Linear.</div>
+  <div class="table-wrap" style="margin-bottom:16px"><table style="min-width:640px"><thead><tr><th>Serviço</th><th>Preço base</th><th>Periodicidade</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+    ${db.pricing.map(p => ui.open['price:' + p.id]
+      ? `<tr><td colspan="5"><form class="row" data-form="price-edit" data-id="${p.id}"><b style="flex:1 1 160px">${esc(INT[p.service])}</b>
+          <label class="f" style="flex:0 1 140px">Preço (R$)<input name="basePrice" id="pe-p-${p.id}" value="${p.basePrice}" inputmode="decimal"></label>
+          <label class="f" style="flex:0 1 140px">Periodicidade<input name="billingPeriod" id="pe-b-${p.id}" value="${esc(p.billingPeriod)}"></label>
+          <label class="f" style="flex:0 1 110px">Ativo<select name="active" id="pe-a-${p.id}"><option value="1" ${p.active ? 'selected' : ''}>Sim</option><option value="0" ${p.active ? '' : 'selected'}>Não</option></select></label>
+          <button class="btn small primary" style="align-self:flex-end">Salvar</button><button type="button" class="btn small" style="align-self:flex-end" data-action="toggle" data-key="price:${p.id}">Cancelar</button></form></td></tr>`
+      : `<tr><td>${esc(INT[p.service])}</td><td class="num">${brl(p.basePrice)}</td><td>${esc(p.billingPeriod)}</td><td><span class="badge ${p.active ? 'ok' : ''}">${p.active ? 'Ativo' : 'Inativo'}</span></td>
+          <td><button type="button" class="btn small" data-action="toggle" data-key="price:${p.id}">Editar</button></td></tr>`).join('')}
+  </tbody></table></div>
+  <form class="card" data-form="price-new"><h2 style="margin-bottom:12px">Cadastrar preço de um serviço</h2><div class="form-grid">
+    <label class="f">Serviço<select name="service" id="pn-s"><option value="">Selecione…</option>${Object.entries(INT).map(([k, v]) => `<option value="${k}" ${used.has(k) ? 'disabled' : ''}>${v}${used.has(k) ? ' (já cadastrado)' : ''}</option>`).join('')}</select></label>
+    <label class="f">Preço base (R$)<input name="basePrice" id="pn-p" inputmode="decimal" placeholder="Ex.: 450"></label>
+    <label class="f">Periodicidade<input name="billingPeriod" id="pn-b" value="mensal"></label>
+  </div><div class="row end" style="margin-top:12px"><button class="btn primary">Cadastrar</button></div></form>`;
+}
+
+function viewAtividade(){
+  return `<div class="page-head"><div><h1>Atividade do sistema</h1><p class="sub">Cada ação gera um evento registrado. Os marcados como <span class="chip-auto" style="margin:0">automático</span> o sistema fez sozinho, sem ninguém clicar.</p></div></div>
+  <section class="card">${db.events.length ? db.events.slice(0, 200).map(e => eventRow(e, true)).join('') : '<p class="muted">Nada ainda.</p>'}</section>`;
+}
+
+function render(){
+  renderNav();
+  const r = ui.route.name;
+  $('#app').innerHTML = r === 'lead' ? viewLead() : r === 'novo' ? viewNovo() : r === 'pipeline' ? viewPipeline() : r === 'precos' ? viewPrecos() : r === 'atividade' ? viewAtividade() : viewLeads();
+  const rb = $('#reset-btn'); rb.textContent = ui.confirmReset ? 'Clique de novo para confirmar' : 'Recomeçar do zero';
+}
+
+// ------------------------------ ações ------------------------------
+const find = (arr, id) => { const x = db[arr].find(o => o.id === id); if (!x) throw new Error('Registro não encontrado.'); return x; };
+const ACTIONS = {
+  go: el => navigate({name: el.dataset.route}),
+  'open-lead': el => navigate({name:'lead', id: el.dataset.id}),
+  toggle: el => { ui.open[el.dataset.key] = !ui.open[el.dataset.key]; },
+  'hide-tour': () => { ui.hideTour = true; try { localStorage.setItem(STORE_KEY + ':tour', 'off'); } catch {} },
+  'clear-filters': () => { ui.filters = {}; },
+  reset: () => {
+    if (!ui.confirmReset){ ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; render(); }, 3500); return; }
+    ui.confirmReset = false; Object.assign(ui, {route:{name:'leads'}, open:{}, filters:{}, scheduleDate:{}, signUrls:{}, missing:{}, hideTour:false});
+    try { localStorage.removeItem(STORE_KEY + ':tour'); } catch {}
+    seed(); toast('Demonstração reiniciada com os dados originais.');
+  },
+  'meeting-status': el => { const m = find('meetings', el.dataset.id); m.status = el.dataset.status; emit('meeting.status_changed', m.leadId, {status: MST[m.status]}); toast(`Reunião marcada como ${MST[m.status].toLowerCase()}.`); },
+  'del-insight': el => { const m = find('meetings', el.dataset.id); m.insights = m.insights.filter(i => i.id !== el.dataset.iid); emit('meeting.insight_removed', m.leadId); },
+  'p-draft': el => draftProposal(find('leads', el.dataset.id)),
+  'p-send': el => { const p = find('proposals', el.dataset.id); if (p.status !== 'APROVADA') throw new Error('Só propostas aprovadas podem ser enviadas.'); p.status = 'ENVIADA'; p.sentAt = nowISO();
+    emit('proposal.sent', p.leadId, {versao: p.version}); toast(`Proposta v${p.version} enviada. Follow-up sugerido em D+1, D+3 e D+7.`); advanceTo(leadById(p.leadId), 'PROPOSTA_ENVIADA'); },
+  'p-accept': el => { const p = find('proposals', el.dataset.id); if (p.status !== 'ENVIADA') throw new Error('Só propostas enviadas podem ser aceitas.'); p.status = 'ACEITA'; p.acceptedAt = nowISO(); p.followUpStoppedReason = 'proposta aceita';
+    emit('proposal.accepted', p.leadId, {versao: p.version, total: brl(p.totalValue)}); toast('Proposta aceita — follow-up encerrado sozinho.', 'auto'); advanceTo(leadById(p.leadId), 'ACEITO'); },
+  'p-followup': el => { const p = find('proposals', el.dataset.id); if (p.followUpStoppedReason) throw new Error('O follow-up desta proposta já foi encerrado.'); p.lastFollowUpAt = nowISO(); emit('proposal.follow_up_logged', p.leadId, {versao: p.version}); toast('Follow-up registrado.'); },
+  'c-send': el => { const c = find('contracts', el.dataset.id); if (c.status !== 'PRONTO_PARA_ASSINATURA') throw new Error('O contrato precisa estar "Pronto para assinatura".');
+    const ref = 'mock-esign-' + uid(); c.status = 'ENVIADO_PARA_ASSINATURA'; c.sentForSignatureAt = nowISO(); c.signatureProviderRef = ref; ui.signUrls[c.id] = 'https://assinatura-simulada.exemplo/d/' + uid() + uid();
+    emit('contract.sent_for_signature', c.leadId, {versao: c.version}); toast('Contrato enviado para assinatura (provedor simulado).'); advanceTo(leadById(c.leadId), 'ASSINATURA'); },
+  'c-signed': el => { const c = find('contracts', el.dataset.id); if (c.status !== 'ENVIADO_PARA_ASSINATURA') throw new Error('O contrato precisa ter sido enviado para assinatura.'); c.status = 'ASSINADO'; c.signedAt = nowISO();
+    emit('contract.signed', c.leadId, {versao: c.version}); toast('Contrato assinado — evento contract.signed disparado (gatilho do onboarding).', 'auto'); advanceTo(leadById(c.leadId), 'ONBOARDING'); },
+};
+const FORMS = {
+  filters: d => { ui.filters = {segment: clean(d.segment), document: clean(d.document), status: clean(d.status), minRevenue: numOrNull(d.minRevenue), maxRevenue: numOrNull(d.maxRevenue), minEmployees: numOrNull(d.minEmployees), maxEmployees: numOrNull(d.maxEmployees)}; },
+  'create-lead': d => { const l = createLead(d); toast(`Lead criado com score ${l.score} (${TEMP[l.temperature]}).`); navigate({name:'lead', id:l.id}); },
+  'edit-lead': (d, f) => { updateLead(find('leads', f.dataset.id), d); ui.open['edit:' + f.dataset.id] = false; },
+  'add-interest': (d, f) => addInterest(find('leads', f.dataset.id), d.interest),
+  answer: (d, f) => { answerItem(find('checklist', f.dataset.id), d.answer); },
+  stage: (d, f) => { if (blank(d.to)) throw new Error('Escolha a etapa de destino.'); const l = find('leads', f.dataset.id); const from = l.status; changeStage(l, d.to, d.reason, d.by || 'equipe comercial'); toast(`Etapa alterada: ${ST[from]} → ${ST[d.to]}`); },
+  schedule: (d, f) => { scheduleMeeting(find('leads', f.dataset.id), d.date, d.hour, d.emails); ui.open['sched:' + f.dataset.id] = false; },
+  transcript: (d, f) => { const m = find('meetings', f.dataset.id); m.transcriptText = clean(d.transcriptText); emit('meeting.transcript_updated', m.leadId); toast('Transcrição salva.'); },
+  report: (d, f) => { const m = find('meetings', f.dataset.id); m.report = Object.fromEntries(Object.entries(d).map(([k, v]) => [k, clean(v)])); emit('meeting.report_saved', m.leadId); toast('Relatório da reunião salvo.'); },
+  insight: (d, f) => { const m = find('meetings', f.dataset.id); if (blank(d.necessity)) throw new Error('Descreva a necessidade identificada.'); if (blank(d.priority)) throw new Error('Escolha a prioridade.');
+    m.insights.push({id:uid(), necessity: d.necessity.trim(), department: clean(d.department), priority: d.priority, suggestedService: clean(d.suggestedService), at: nowISO()}); emit('meeting.insight_added', m.leadId, {prioridade: PRIO[d.priority]}); toast('Insight registrado.'); },
+  item: (d, f) => { const p = find('proposals', f.dataset.id); if (!['RASCUNHO', 'EM_REVISAO'].includes(p.status)) throw new Error('Essa proposta já seguiu adiante e não pode mais ser ajustada.');
+    const it = p.items.find(i => i.id === f.dataset.iid); const v = numOrNull(d.finalPrice); if (v == null || v < 0) throw new Error('Informe um preço final válido (não negativo).');
+    it.finalPrice = v; it.notes = clean(d.notes) || ''; p.totalValue = p.items.reduce((s, i) => s + i.finalPrice, 0); emit('proposal.item_adjusted', p.leadId, {servico: INT[it.service], preco: brl(v)}); toast(`Item ajustado. Novo total: ${brl(p.totalValue)}`); },
+  approve: (d, f) => { const p = find('proposals', f.dataset.id); if (blank(d.approvedBy)) throw new Error('Informe quem está aprovando a proposta.'); p.status = 'APROVADA'; p.approvedBy = d.approvedBy.trim(); p.approvedAt = nowISO();
+    emit('proposal.approved', p.leadId, {versao: p.version, por: p.approvedBy}); toast(`Proposta v${p.version} aprovada por ${p.approvedBy}.`); },
+  reject: (d, f) => { const p = find('proposals', f.dataset.id); if (blank(d.reason)) throw new Error('Informe o motivo da rejeição.'); p.status = 'REJEITADA'; p.rejectedAt = nowISO(); p.rejectionReason = d.reason.trim(); p.followUpStoppedReason = 'proposta rejeitada';
+    emit('proposal.rejected', p.leadId, {versao: p.version}); toast('Proposta rejeitada. O funil não muda sozinho: pode haver uma nova versão.'); },
+  'c-draft': (d, f) => draftContract(find('leads', f.dataset.id), d.startDate, d.signatureLocation),
+  'c-edit': (d, f) => { const c = find('contracts', f.dataset.id); if (!['RASCUNHO', 'EM_REVISAO'].includes(c.status)) throw new Error('Esse contrato não pode mais ser editado.'); c.filledBody = d.filledBody; emit('contract.edited', c.leadId, {versao: c.version}); ui.open['cedit:' + c.id] = false; toast('Texto do contrato salvo.'); },
+  'c-review': (d, f) => { const c = find('contracts', f.dataset.id); if (blank(d.reviewedBy)) throw new Error('Informe quem está revisando.'); const pend = pendingOf(c);
+    c.reviewedBy = d.reviewedBy.trim(); c.reviewedAt = nowISO(); c.status = pend.length ? 'EM_REVISAO' : 'PRONTO_PARA_ASSINATURA';
+    emit('contract.reviewed', c.leadId, {versao: c.version, pendencias: pend.length}); toast(pend.length ? `Revisado, mas ainda há ${pend.length} pendência(s): continua "Em revisão".` : 'Revisado sem pendências: pronto para assinatura.'); advanceTo(leadById(c.leadId), 'CONTRATO'); },
+  'c-cancel': (d, f) => { const c = find('contracts', f.dataset.id); if (blank(d.reason)) throw new Error('Informe o motivo do cancelamento.'); c.status = 'CANCELADO'; emit('contract.cancelled', c.leadId, {versao: c.version, motivo: d.reason.trim()}); toast('Contrato cancelado.'); },
+  'price-new': d => { if (blank(d.service)) throw new Error('Escolha o serviço.'); const v = numOrNull(d.basePrice); if (v == null || v < 0) throw new Error('Informe um preço válido.');
+    if (db.pricing.some(p => p.service === d.service)) throw new Error('Esse serviço já tem preço — use Editar.'); db.pricing.push({id:uid(), service:d.service, basePrice:v, billingPeriod: clean(d.billingPeriod) || 'mensal', notes:'', active:true});
+    emit('pricing_rule.created', null, {servico: INT[d.service], preco: brl(v)}); toast(`Preço de ${INT[d.service]} cadastrado: ${brl(v)}`); },
+  'price-edit': (d, f) => { const p = find('pricing', f.dataset.id); const v = numOrNull(d.basePrice); if (v == null || v < 0) throw new Error('Informe um preço válido.');
+    p.basePrice = v; p.billingPeriod = clean(d.billingPeriod) || p.billingPeriod; p.active = d.active === '1'; ui.open['price:' + p.id] = false; emit('pricing_rule.updated', null, {servico: INT[p.service], preco: brl(v)}); toast('Preço atualizado.'); },
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  e.preventDefault();
+  try { ACTIONS[el.dataset.action](el); save(); render(); } catch (err) { toast(err.message, 'error'); render(); }
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(f));
+  try { FORMS[f.dataset.form](data, f); save(); render(); } catch (err) { toast(err.message, 'error'); }
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-sched-date]'); if (!el) return;
+  ui.scheduleDate[el.dataset.schedDate] = el.value; render();
+});
+
+db = load();
+if (!db || !Array.isArray(db.leads)) seed();
+render();
+</script>
